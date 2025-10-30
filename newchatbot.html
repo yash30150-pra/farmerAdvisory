@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kisan Mitra – Farmer Helper (Hinglish)</title>
+  <meta name="description" content="Kisan Mitra: Simple AI bot to help farmers with farming-related questions in Hinglish (Hindi + English)">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green-700: #1d6f3a;
+      --green-600: #238a46;
+      --green-500: #2bac56;
+      --green-100: #e9f6ee;
+      --green-050: #f4fbf6;
+      --text-900: #0e141b;
+      --text-700: #2d3742;
+      --text-500: #5b6b79;
+      --border: #e5e8eb;
+      --bg: #fcfdfc;
+      --warn: #b26b00;
+      --error: #b3261e;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--text-900);
+    }
+
+    .page {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+    }
+
+    header {
+      background: linear-gradient(180deg, var(--green-600), var(--green-700));
+      color: white;
+      padding: 20px 16px;
+    }
+
+    .header-content {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: white;
+      color: var(--green-700);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      opacity: 0.95;
+      margin-top: 4px;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px 16px 12px;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 1px 0 rgba(16,24,40,0.02);
+    }
+
+    .settings {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .settings-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    label { font-size: 13px; color: var(--text-700); }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="password"], input[type="text"] {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      background: var(--green-600);
+      color: white;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn.secondary {
+      background: #eef2f6;
+      color: var(--text-900);
+    }
+
+    .notice {
+      font-size: 12px;
+      color: var(--text-500);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chat {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: min(74dvh, 720px);
+    }
+
+    .chat-header {
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .suggestions {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      font-size: 12px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--green-050);
+      color: var(--green-700);
+      cursor: pointer;
+    }
+
+    .messages {
+      overflow: auto;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      background: linear-gradient(180deg, var(--green-050), transparent 120px);
+    }
+
+    .msg {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      max-width: 85%;
+    }
+
+    .msg.user { margin-left: auto; flex-direction: row-reverse; }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--green-100);
+      color: var(--green-700);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+
+    .bubble {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+      line-height: 1.45;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+
+    .msg.user .bubble {
+      background: #ecfdf3;
+      border-color: #d1fadf;
+    }
+
+    .chat-input {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    textarea {
+      resize: none;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      height: 44px;
+      line-height: 1.4;
+    }
+
+    .footer-note {
+      font-size: 12px;
+      color: var(--text-500);
+      padding: 6px 2px 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 18px; }
+      .msg { max-width: 95%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="header-content">
+        <div class="logo">KM</div>
+        <div>
+          <h1>Kisan Mitra – Farmer Helper</h1>
+          <div class="subtitle">Hinglish (Hindi + English) mein seedhi baat, sirf farming ke liye</div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <section class="card settings" aria-label="API Settings">
+          <div class="settings-row">
+            <label for="apiKey">Gemini API Key</label>
+            <div class="input-row">
+              <input id="apiKey" type="password" placeholder="Paste your Google Gemini API key (v1beta)" autocomplete="off" />
+              <button class="btn" id="saveKey">Save</button>
+              <button class="btn secondary" id="clearKey">Clear</button>
+            </div>
+            <div class="notice" id="keyNotice">API key is required and stored only in your browser (localStorage).</div>
+          </div>
+        </section>
+
+        <section class="card chat" aria-label="Chat with Kisan Mitra">
+          <div class="chat-header">
+            <div>
+              <strong>Chat</strong>
+              <div style="font-size:12px; color: var(--text-500);">Poochhiye: kheti, fasal, mitti, paani, keet, bazaar, yojana</div>
+            </div>
+            <button class="btn secondary" id="resetChat">New Chat</button>
+          </div>
+
+          <div class="suggestions" id="suggestions">
+            <button class="chip">Gehun ke liye best beej kaun sa hai?</button>
+            <button class="chip">Tomato me leaf curl ka ilaj?</button>
+            <button class="chip">Pyaaz bawa (rot) rokne ka tarika</button>
+            <button class="chip">Monsoon me dhan ropni kab karen?</button>
+            <button class="chip">Organic khad ka istemal kaise karen?</button>
+          </div>
+
+          <div class="messages" id="messages" role="log" aria-live="polite"></div>
+
+          <div class="chat-input">
+            <textarea id="userInput" placeholder="Apna sawaal likhiye (Hindi/English dono chalega)"></textarea>
+            <button class="btn" id="sendBtn">Send</button>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          AI suggestions informational purpose ke liye hain. Zameeni haalat, mausam, aur local expert ki salaah ka dhyan rakhen.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const els = {
+      apiKey: document.getElementById('apiKey'),
+      saveKey: document.getElementById('saveKey'),
+      clearKey: document.getElementById('clearKey'),
+      keyNotice: document.getElementById('keyNotice'),
+      resetChat: document.getElementById('resetChat'),
+      suggestions: document.getElementById('suggestions'),
+      messages: document.getElementById('messages'),
+      userInput: document.getElementById('userInput'),
+      sendBtn: document.getElementById('sendBtn')
+    };
+
+    const STORAGE_KEY = 'kisan_mitra_gemini_key_v1';
+
+    function loadApiKey() {
+      const key = localStorage.getItem(STORAGE_KEY) || '';
+      els.apiKey.value = key ? '••••-saved-••••' : '';
+      els.keyNotice.textContent = key ? 'API key saved locally in this browser.' : 'API key is required and stored only in your browser (localStorage).';
+    }
+
+    function saveApiKey() {
+      const val = els.apiKey.value.trim();
+      if (!val) return;
+      localStorage.setItem(STORAGE_KEY, val);
+      loadApiKey();
+    }
+
+    function clearApiKey() {
+      localStorage.removeItem(STORAGE_KEY);
+      els.apiKey.value = '';
+      els.keyNotice.textContent = 'API key cleared. Paste a valid key to use the bot.';
+    }
+
+    function getApiKey() {
+        // TODO: USE ENV variables or local storage
+        return "AIzaSyCEkdYvgWO-4_-RHIegO5WmOmAAKNM4IhA";
+      const current = els.apiKey.value.trim();
+      if (current && current !== '••••-saved-••••') return current;
+      return localStorage.getItem(STORAGE_KEY) || '';
+    }
+
+    function addMessage(role, text) {
+      const wrap = document.createElement('div');
+      wrap.className = `msg ${role === 'user' ? 'user' : 'assistant'}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.textContent = role === 'user' ? 'U' : 'KM';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+
+      wrap.appendChild(avatar);
+      wrap.appendChild(bubble);
+      els.messages.appendChild(wrap);
+      els.messages.scrollTop = els.messages.scrollHeight;
+    }
+
+    function setLoading(isLoading) {
+      els.sendBtn.disabled = isLoading;
+      els.sendBtn.textContent = isLoading ? 'Sending…' : 'Send';
+    }
+
+    function isFarmingRelated(text) {
+      const t = (text || '').toLowerCase();
+      const keywords = [
+        'kheti','kisan','fasal','bee?j','beej','miti','mitti','mitti','soil','paani','sinchayi','sinchai','sichai','irrigation','fertilizer','urvark','urvarak','pesticide','keet','keed','keeton','insect','spray','tractor','harvester','krishi','mandi','bazaar','msP','msp','subsidy','yojana','crop','seed','sowing','harvest','yield','weather','mausam','monsoon','barish','gehu','gehun','wheat','dhan','paddy','rice','cotton','sugarcane','soybean','pyaaz','pyaz','onion','tomato','tinda','dairy','poultry','animal husbandry','fpo','kharif','rabi','zaid','nursery','compost','organic','vermi','mulch','drip','sprinkler','soil test','ph','micro nutrient','micronutrient'
+      ];
+      return keywords.some(k => t.includes(k));
+    }
+
+    function refusalMessage() {
+      return 'Maaf kijiye, main sirf farming se jude sawaalon ka jawab de sakta hoon. Kripya kheti-badi, fasal, mitti, paani, keet niyantran, bazaar, ya sarkari yojana se related prashna poochiye.';
+    }
+
+    async function askGemini(question) {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        throw new Error('API key missing');
+      }
+
+      const systemInstructions = [
+        'You are Kisan Mitra, a helpful farming assistant for Indian farmers.',
+        'Answer ONLY agriculture/farming related queries (crops, soil, water/irrigation, pests/diseases, fertilizers, organic practices, agri-machinery, weather, mandi/bazaar rates, government schemes).',
+        'If a query is not related to farming, briefly refuse: "Main sirf farming se jude sawaalon ka jawab de sakta hoon." and ask for a farming topic.',
+        'Style: Hinglish (mix simple Hindi + English), clear, friendly, practical. Use short steps or bullet points when useful.',
+        'Prefer metric units. Add safety cautions for chemicals. Ask 1 clarifying question if location/variety is crucial.'
+      ].join('\n');
+
+      const payloadText = `${systemInstructions}\n\nUser question: ${question}`;
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const body = {
+        contents: [
+          { role: 'user', parts: [{ text: payloadText }] }
+        ]
+      };
+
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`Gemini error: ${resp.status} ${text}`);
+      }
+
+      const data = await resp.json();
+      const out = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return out.trim() || 'Mujhe sahi jawaab nahi mila. Kripya sawaal ko thoda aur saaf tarike se likhiye.';
+    }
+
+    async function handleSend() {
+      const q = els.userInput.value.trim();
+      if (!q) return;
+      addMessage('user', q);
+      els.userInput.value = '';
+      setLoading(true);
+
+      try {
+        if (!isFarmingRelated(q)) {
+          addMessage('assistant', refusalMessage());
+          return;
+        }
+        const answer = await askGemini(q);
+        addMessage('assistant', answer);
+      } catch (e) {
+        const msg = (e && e.message) ? e.message : String(e);
+        addMessage('assistant', `Error: ${msg}\n\nTips:\n- API key sahi dalein (Google Gemini v1beta).\n- Thodi der baad try karein.`);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function resetChat() {
+      els.messages.innerHTML = '';
+      addMessage('assistant', 'Namaste! Main Kisan Mitra hoon. Aap apne farming se jude sawaal puchh sakte hain – jaise fasal ka beej, mitti ki taiyari, keet/disease control, irrigation, ya mandi/bazaar ke baare me. Main Hinglish me seedhe-se jawaab dunga.');
+    }
+
+    function wireEvents() {
+      els.saveKey.addEventListener('click', saveApiKey);
+      els.clearKey.addEventListener('click', clearApiKey);
+      els.sendBtn.addEventListener('click', handleSend);
+      els.userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSend();
+        }
+      });
+      els.resetChat.addEventListener('click', resetChat);
+      els.suggestions.addEventListener('click', (e) => {
+        const t = e.target;
+        if (t && t.classList.contains('chip')) {
+          els.userInput.value = t.textContent.trim();
+          handleSend();
+        }
+      });
+    }
+
+    loadApiKey();
+    wireEvents();
+    resetChat();
+  </script>
+</body>
+</html>
+
+
