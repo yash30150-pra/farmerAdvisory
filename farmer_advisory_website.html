@@ -801,13 +801,49 @@
     userInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') handleSend(); });
 
     // Image upload in chat
-    imageUpload.addEventListener('change', (e)=>{
+    // Analyze crop image: converts file to base64, sends to Gemini, and displays result
+    async function analyzeCropImage(base64Image){
+      // Note: We include the base64 payload in the user prompt. For production,
+      // use a backend to avoid exposing API keys and to handle large binary uploads.
+      const b64 = (typeof base64Image === 'string' && base64Image.includes('base64,'))
+        ? base64Image.split('base64,')[1]
+        : base64Image;
+
+      const prompt = `Identify the crop and its condition from this image.\n\nInstructions:\n- Reply succinctly with \"Crop:\", \"Condition:\" (healthy/mild/moderate/severe), \"Likely issues:\", and short \"Recommendations:\" as bullet points.\n- If you cannot determine, reply honestly that you are unsure and list what extra info you'd need (location, variety, closeup).\n\nImage (base64): ${b64}`;
+
+      // Reuse existing askGemini helper so auth/payload are consistent
+      const resp = await askGemini(prompt);
+      return resp;
+    }
+
+    imageUpload.addEventListener('change', async (e)=>{
       const file = e.target.files[0];
       if(!file) return;
+
+      // Validate file type
+      if(!file.type.startsWith('image/')){
+        addMessage('bot', '❌ Invalid file type. Please upload a JPG or PNG image.');
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onload = function(ev){
-        addMessage('user', ev.target.result, true);
-        setTimeout(()=> addMessage('bot', '📷 Image received. Analyzing crop health...'), 900);
+      reader.onload = async function(ev){
+        try{
+          // show user image in chat
+          addMessage('user', ev.target.result, true);
+
+          // Inform user analysis started
+          addMessage('bot', '📷 Image received. Analyzing crop...');
+
+          // Call analyzer (base64 data URL passed)
+          const result = await analyzeCropImage(ev.target.result);
+
+          // Show Gemini response (rendered as markdown by addMessage)
+          addMessage('bot', result);
+        } catch(err){
+          console.error('Image analysis error', err);
+          addMessage('bot', '⚠️ Image analysis failed. Please try again later.');
+        }
       }
       reader.readAsDataURL(file);
     });
