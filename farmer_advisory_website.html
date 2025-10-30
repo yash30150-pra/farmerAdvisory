@@ -634,18 +634,112 @@
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Sending simple stub message (preserves your original behavior but improved UX)
-    sendBtn.addEventListener('click', sendMessage);
-    userInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') sendMessage(); });
+    // Replace simple stub with LLM-backed handler (Gemini) and filtering
+    const els = {
+      userInput,
+      sendBtn,
+      chatMessages
+    };
 
-    function sendMessage(){
-      const text = userInput.value.trim();
-      if(!text) return;
-      addMessage('user', text);
-      userInput.value = '';
-      // simulate thinking
-      setTimeout(()=> addMessage('bot', '🌾 आपका प्रश्न मिला — सलाह यहाँ दिखाई देगी।'), 900);
+    function getApiKey(){
+      // Look up saved API key in localStorage, otherwise prompt the user once and save.
+      try{
+        let key = localStorage.getItem('GEMINI_API_KEY');
+         // TODO: USE ENV variables or local storage
+        return "AIzaSyCEkdYvgWO-4_-RHIegO5WmOmAAKNM4IhA";
+        if(!key){
+          key = window.prompt('Enter your Google Gemini API key (will be saved to localStorage for this site):');
+          if(key) localStorage.setItem('GEMINI_API_KEY', key.trim());
+        }
+        return key && key.trim();
+      } catch(e){
+        return null;
+      }
     }
+
+    function isFarmingRelated(text) {
+      const t = (text || '').toLowerCase();
+      const keywords = [
+        'kheti','kisan','fasal','bee?j','beej','miti','mitti','soil','paani','sinchayi','sinchai','sichai','irrigation','fertilizer','urvark','urvarak','pesticide','keet','keed','keeton','insect','spray','tractor','harvester','krishi','mandi','bazaar','msp','msP','subsidy','yojana','crop','seed','sowing','harvest','yield','weather','mausam','monsoon','barish','gehu','gehun','wheat','dhan','paddy','rice','cotton','sugarcane','soybean','pyaaz','pyaz','onion','tomato','tinda','dairy','poultry','animal husbandry','fpo','kharif','rabi','zaid','nursery','compost','organic','vermi','mulch','drip','sprinkler','soil test','ph','micro nutrient','micronutrient'
+      ];
+      return keywords.some(k => t.includes(k));
+    }
+
+    function refusalMessage() {
+      return 'Maaf kijiye, main sirf farming se jude sawaalon ka jawab de sakta hoon. Kripya kheti-badi, fasal, mitti, paani, keet niyantran, bazaar, ya sarkari yojana se related prashna poochiye.';
+    }
+
+    async function askGemini(question) {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        throw new Error('API key missing');
+      }
+
+      const systemInstructions = [
+        'You are Kisan Mitra, a helpful farming assistant for Indian farmers.',
+        'Answer ONLY agriculture/farming related queries (crops, soil, water/irrigation, pests/diseases, fertilizers, organic practices, agri-machinery, weather, mandi/bazaar rates, government schemes).',
+        'If a query is not related to farming, briefly refuse: "Main sirf farming se jude sawaalon ka jawab de sakta hoon." and ask for a farming topic.',
+        'Style: Hinglish (mix simple Hindi + English), clear, friendly, practical. Use short steps or bullet points when useful.',
+        'Prefer metric units. Add safety cautions for chemicals. Ask 1 clarifying question if location/variety is crucial.'
+      ].join('\n');
+
+      const payloadText = `${systemInstructions}\n\nUser question: ${question}`;
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const body = {
+        contents: [
+          { role: 'user', parts: [{ text: payloadText }] }
+        ]
+      };
+
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`Gemini error: ${resp.status} ${text}`);
+      }
+
+      const data = await resp.json();
+      const out = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return out.trim() || 'Mujhe sahi jawaab nahi mila. Kripya sawaal ko thoda aur saaf tarike se likhiye.';
+    }
+
+    function setLoading(v){
+      try{
+        els.sendBtn.disabled = !!v;
+        els.sendBtn.textContent = v ? 'Sending…' : 'Send';
+        if(v) chatToggle.setAttribute('aria-busy','true'); else chatToggle.removeAttribute('aria-busy');
+      }catch(e){}
+    }
+
+    async function handleSend(){
+      const q = els.userInput.value.trim();
+      if(!q) return;
+      addMessage('user', q);
+      els.userInput.value = '';
+      setLoading(true);
+      try{
+        if(!isFarmingRelated(q)){
+          addMessage('bot', refusalMessage());
+          return;
+        }
+        const answer = await askGemini(q);
+        addMessage('bot', answer);
+      } catch(e){
+        const msg = (e && e.message) ? e.message : String(e);
+        addMessage('bot', `Error: ${msg}\n\nTips:\n- API key sahi dalein (Google Gemini v1beta).\n- Agar CORS error aaye to backend proxy istemal karein.`);
+      } finally{
+        setLoading(false);
+      }
+    }
+
+    // Wire events to the new handler
+    sendBtn.addEventListener('click', ()=> { handleSend(); });
+    userInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') handleSend(); });
 
     // Image upload in chat
     imageUpload.addEventListener('change', (e)=>{

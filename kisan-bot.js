@@ -161,7 +161,7 @@
       });
     }
 
-    loadApiKey();
-    wireEvents();
-    resetChat();
+    // loadApiKey();
+    // wireEvents();
+    // resetChat();
   
