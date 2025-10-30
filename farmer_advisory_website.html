@@ -1018,6 +1018,117 @@
       }
     });
 
+    /* ----------------------------
+       Real-time Weather (OpenWeatherMap)
+       ---------------------------- */
+    function getOpenWeatherKey(){
+      try{ return localStorage.getItem('AQFAS_OWM_KEY') || ''; } catch(e){ return ''; }
+    }
+
+    function promptOpenWeatherKey(){
+      try{
+        const existing = getOpenWeatherKey();
+        if(existing) return existing;
+        const k = window.prompt('Enter your OpenWeatherMap API key (free plan). It will be saved in localStorage for this site:');
+        if(k){ localStorage.setItem('AQFAS_OWM_KEY', k.trim()); return k.trim(); }
+      }catch(e){}
+      return '';
+    }
+
+    async function getWeatherForLocation(lat, lon){
+      const cacheKey = 'AQFAS_WEATHER_CACHE';
+      try{
+        const cachedRaw = localStorage.getItem(cacheKey);
+        if(cachedRaw){
+          const cached = JSON.parse(cachedRaw);
+          // use cache if newer than 30 minutes
+          if(cached?.ts && (Date.now() - cached.ts) < (30*60*1000)){
+            return cached.data;
+          }
+        }
+      }catch(e){ /* ignore cache errors */ }
+
+      const key = getOpenWeatherKey() || promptOpenWeatherKey();
+      if(!key) throw new Error('OpenWeatherMap API key missing');
+
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=metric&appid=${encodeURIComponent(key)}`;
+      const resp = await fetch(url);
+      if(!resp.ok) {
+        const t = await resp.text().catch(()=>resp.statusText);
+        throw new Error('Weather API error: ' + (t || resp.status));
+      }
+      const data = await resp.json();
+      try{ localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data })); }catch(e){}
+      return data;
+    }
+
+    function updateWeatherUI(data){
+      if(!data) return;
+      // target first weather card (Today)
+      const first = document.querySelector('.weather-widget .weather-card');
+      if(!first) return;
+      try{
+        const tempEl = first.querySelector('.temp');
+        const conditionEl = first.querySelectorAll('.small')[0];
+        const humidityEl = first.querySelectorAll('.small.muted')[0];
+        const city = data.name || (data?.sys?.country ? data.sys.country : '');
+        const temp = (data.main && typeof data.main.temp !== 'undefined') ? Math.round(data.main.temp) + '°C' : '-°C';
+        const cond = data.weather && data.weather[0] ? (data.weather[0].description || '') : '';
+        const hum = data.main && typeof data.main.humidity !== 'undefined' ? 'Humidity: ' + data.main.humidity + '%' : '';
+        if(tempEl) tempEl.innerText = temp;
+        if(conditionEl) conditionEl.innerText = cond ? cond.charAt(0).toUpperCase() + cond.slice(1) : '';
+        if(humidityEl) humidityEl.innerText = hum;
+        // also show location under header
+        const header = first.querySelector('h4');
+        if(header) header.innerText = city ? `${header.innerText.split('|')[0].trim()} | ${city}` : header.innerText;
+        // optionally set icon
+        if(data.weather && data.weather[0] && data.weather[0].icon){
+          const iconCode = data.weather[0].icon;
+          let img = first.querySelector('.owm-icon');
+          if(!img){ img = document.createElement('img'); img.className = 'owm-icon'; img.style.width='48px'; img.style.height='48px'; img.style.display='block'; img.style.marginTop='6px'; first.appendChild(img); }
+          img.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+          img.alt = data.weather[0].description || 'weather';
+        }
+      }catch(e){ console.error('updateWeatherUI error', e); }
+    }
+
+    function showWeatherError(message){
+      const first = document.querySelector('.weather-widget .weather-card');
+      if(!first) return;
+      const tempEl = first.querySelector('.temp');
+      const conditionEl = first.querySelectorAll('.small')[0];
+      const humidityEl = first.querySelectorAll('.small.muted')[0];
+      if(tempEl) tempEl.innerText = '--';
+      if(conditionEl) conditionEl.innerText = message;
+      if(humidityEl) humidityEl.innerText = '';
+    }
+
+    function requestLocationAndUpdateWeather(){
+      if(!('geolocation' in navigator)){
+        showWeatherError('Geolocation not supported');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async (pos)=>{
+        const lat = pos.coords.latitude; const lon = pos.coords.longitude;
+        try{
+          const data = await getWeatherForLocation(lat, lon);
+          updateWeatherUI(data);
+        }catch(err){
+          console.error('Weather fetch error', err);
+          showWeatherError('Weather unavailable');
+        }
+      }, (err)=>{
+        console.warn('Geolocation denied or failed', err);
+        showWeatherError('Location denied');
+      }, { enableHighAccuracy:false, timeout:10000 });
+    }
+
+    // call on load (non-blocking)
+    document.addEventListener('DOMContentLoaded', ()=>{
+      // attempt to update weather but don't interfere with other logic
+      try{ requestLocationAndUpdateWeather(); }catch(e){ console.warn(e); }
+    });
+
   </script>
 </body>
 </html>
