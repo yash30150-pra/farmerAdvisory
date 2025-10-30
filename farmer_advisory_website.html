@@ -319,12 +319,22 @@
       </div>
 
       <div class="nav-links" id="desktopLinks" role="menubar">
-        <a href="#home">Home</a>
-        <a href="#weather">Weather</a>
-        <a href="#schemes">Gov Schemes</a>
-        <a href="#market">Market</a>
-        <a href="#diseases">Pest & Disease</a>
-        <a href="#support" id="supportLink">24/7 Support</a>
+        <a href="#home" data-i18n="nav_home">Home</a>
+        <a href="#weather" data-i18n="nav_weather">Weather</a>
+        <a href="#schemes" data-i18n="nav_schemes">Gov Schemes</a>
+        <a href="#market" data-i18n="nav_market">Market</a>
+        <a href="#diseases" data-i18n="nav_diseases">Pest & Disease</a>
+        <a href="#support" id="supportLink" data-i18n="nav_support">24/7 Support</a>
+      </div>
+
+      <!-- Language selector -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <label for="langSelect" class="muted small" style="margin-right:6px">Language</label>
+        <select id="langSelect" aria-label="Language selector" style="background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.06); padding:6px 8px; border-radius:8px;">
+          <option value="en">English</option>
+          <option value="hi">हिंदी</option>
+          <option value="ml"> മലയാളം</option>
+        </select>
       </div>
 
       <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">☰</button>
@@ -342,34 +352,34 @@
   </nav>
 
   <!-- Support badge + contact modal -->
-  <div class="support-badge" id="supportBadge" role="button" tabindex="0" aria-label="Open support contact">24/7 SUPPORT</div>
+  <div class="support-badge" id="supportBadge" role="button" tabindex="0" aria-label="Open support contact"><span data-i18n="support_badge">24/7 SUPPORT</span></div>
   <div class="contact-modal" id="contactModal" role="dialog" aria-modal="false" aria-labelledby="supportTitle">
-    <h4 id="supportTitle">24/7 Support</h4>
-    <p class="small">📞 Helpline: <strong>638975****</strong></p>
-    <p class="small">💬 Chat with experts anytime</p>
-    <p class="small">📧 Email: <strong>AQ-FAS06@Gmail.com</strong></p>
+    <h4 id="supportTitle"><span data-i18n="support_title">24/7 Support</span></h4>
+    <p class="small" data-i18n-html="support_phone">📞 Helpline: <strong>638975****</strong></p>
+    <p class="small" data-i18n-html="support_chat">💬 Chat with experts anytime</p>
+    <p class="small" data-i18n-html="support_email">📧 Email: <strong>AQ-FAS06@Gmail.com</strong></p>
   </div>
 
   <!-- MAIN CONTENT -->
   <main class="container" id="home">
     <section class="hero reveal" aria-labelledby="heroTitle">
       <div class="hero-card">
-        <h1 id="heroTitle">🌾 AI-Based Farmer Advisory System</h1>
-        <p>Empowering farmers with AI-driven insights, weather forecasts, market prices and government schemes — all in one place.</p>
+        <h1 id="heroTitle" data-i18n="hero_title">🌾 AI-Based Farmer Advisory System</h1>
+        <p data-i18n="hero_sub">Empowering farmers with AI-driven insights, weather forecasts, market prices and government schemes — all in one place.</p>
 
         <div class="hero-cta">
-          <button class="btn btn-primary" onclick="openChat()"><span>💬 Start Chat</span></button>
-          <button class="btn btn-ghost" onclick="downloadBrochure()">📄 Download Brochure</button>
+          <button class="btn btn-primary" onclick="openChat()"><span id="startChatText" data-i18n="start_chat">💬 Start Chat</span></button>
+          <button class="btn btn-ghost" onclick="downloadBrochure()"><span data-i18n="download_brochure">📄 Download Brochure</span></button>
         </div>
 
         <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap;">
           <div style="background:rgba(255,255,255,0.02); padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);">
-            <div style="font-size:0.85rem" class="muted">Available Languages</div>
-            <div style="font-weight:800; margin-top:6px">Hindi • English • Regional</div>
+            <div style="font-size:0.85rem" class="muted" data-i18n="available_languages_label">Available Languages</div>
+            <div style="font-weight:800; margin-top:6px" data-i18n="available_languages_value">Hindi • English • Regional</div>
           </div>
           <div style="background:rgba(255,255,255,0.02); padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);">
-            <div class="muted" style="font-size:0.85rem">Offline Mode</div>
-            <div style="font-weight:800; margin-top:6px">Yes (caching & local advisory)</div>
+            <div class="muted" style="font-size:0.85rem" data-i18n="offline_mode_label">Offline Mode</div>
+            <div style="font-weight:800; margin-top:6px" data-i18n="offline_mode_value">Yes (caching & local advisory)</div>
           </div>
         </div>
       </div>
@@ -377,19 +387,19 @@
       <aside class="status-panel">
         <div class="stat reveal">
           <div>
-            <h4>Active Farmers</h4>
+            <h4 data-i18n="stat_active_farmers">Active Farmers</h4>
             <p>12,430</p>
           </div>
         </div>
         <div class="stat reveal">
           <div>
-            <h4>Avg Response Time</h4>
+            <h4 data-i18n="stat_avg_response">Avg Response Time</h4>
             <p>~ 1 min</p>
           </div>
         </div>
         <div class="stat reveal">
           <div>
-            <h4>Crop Models</h4>
+            <h4 data-i18n="stat_crop_models">Crop Models</h4>
             <p>45+</p>
           </div>
         </div>
@@ -399,34 +409,34 @@
     <!-- FEATURES -->
     <section class="features" aria-label="Features">
       <div class="feature-card reveal">
-        <h3>🤖 AI Chatbot Assistant</h3>
-        <p>Instant, context-aware answers based on your crop, location and past activities. Voice & image support included.</p>
+        <h3 data-i18n="feat_chatbot_title">🤖 AI Chatbot Assistant</h3>
+        <p data-i18n="feat_chatbot_desc">Instant, context-aware answers based on your crop, location and past activities. Voice & image support included.</p>
       </div>
       <div class="feature-card reveal">
-        <h3>🌤️ Weather Detection</h3>
-        <p>Real-time weather and alerts to plan sprays, irrigation and harvest windows — minimize losses from extreme weather.</p>
+        <h3 data-i18n="feat_weather_title">🌤️ Weather Detection</h3>
+        <p data-i18n="feat_weather_desc">Real-time weather and alerts to plan sprays, irrigation and harvest windows — minimize losses from extreme weather.</p>
       </div>
       <div class="feature-card reveal">
-        <h3>🏛️ Government Schemes</h3>
-        <p>Curated list of schemes you qualify for, with step-by-step application help and document checklists.</p>
+        <h3 data-i18n="feat_schemes_title">🏛️ Government Schemes</h3>
+        <p data-i18n="feat_schemes_desc">Curated list of schemes you qualify for, with step-by-step application help and document checklists.</p>
       </div>
       <div class="feature-card reveal">
-        <h3>🦠 Pest & Disease Detection</h3>
-        <p>Upload images to receive AI diagnosis, recommended treatment and prevention tips tailored to your region.</p>
+        <h3 data-i18n="feat_pest_title">🦠 Pest & Disease Detection</h3>
+        <p data-i18n="feat_pest_desc">Upload images to receive AI diagnosis, recommended treatment and prevention tips tailored to your region.</p>
       </div>
       <div class="feature-card reveal">
-        <h3>📈 Market Prices</h3>
-        <p>Live mandi rates across regions so you can pick the right time and place to sell for the best price.</p>
+        <h3 data-i18n="feat_market_title">📈 Market Prices</h3>
+        <p data-i18n="feat_market_desc">Live mandi rates across regions so you can pick the right time and place to sell for the best price.</p>
       </div>
       <div class="feature-card reveal">
-        <h3>📞 24/7 Support</h3>
-        <p>Round-the-clock access to verified experts — phone, chat and email support channels available.</p>
+        <h3 data-i18n="feat_support_title">📞 24/7 Support</h3>
+        <p data-i18n="feat_support_desc">Round-the-clock access to verified experts — phone, chat and email support channels available.</p>
       </div>
     </section>
 
     <!-- WEATHER -->
     <section class="section reveal" id="weather" aria-labelledby="weatherTitle">
-      <h2 id="weatherTitle">🌤️ Weather Forecast</h2>
+    <h2 id="weatherTitle" data-i18n="weather_title">🌤️ Weather Forecast</h2>
       <div class="weather-widget">
         <div class="weather-card">
           <h4>Today</h4>
@@ -457,7 +467,7 @@
 
     <!-- SCHEMES -->
     <section class="section reveal" id="schemes" aria-labelledby="schemesTitle">
-      <h2 id="schemesTitle">🏛️ Government Schemes for Farmers</h2>
+    <h2 id="schemesTitle" data-i18n="schemes_title">🏛️ Government Schemes for Farmers</h2>
       <div style="display:grid; gap:12px;">
         <div class="scheme-card">
           <h4>PM-KISAN Scheme</h4>
@@ -480,7 +490,7 @@
 
     <!-- MARKET PRICES -->
     <section class="section reveal" id="market" aria-labelledby="marketTitle">
-      <h2 id="marketTitle">📈 Market Prices Today</h2>
+    <h2 id="marketTitle" data-i18n="market_title">📈 Market Prices Today</h2>
       <div class="price-table">
         <table aria-describedby="marketTitle">
           <thead>
@@ -503,16 +513,16 @@
 
     <!-- DISEASES -->
     <section class="section reveal" id="diseases" aria-labelledby="diseasesTitle">
-      <h2 id="diseasesTitle">🦠 Pest & Disease Management</h2>
+    <h2 id="diseasesTitle" data-i18n="diseases_title">🦠 Pest & Disease Management</h2>
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
         <div class="feature-card">
-          <h3>📱 Upload Crop Image</h3>
+            <h3 data-i18n="upload_image_title">📱 Upload Crop Image</h3>
           <p>Take a photo of affected crops and receive AI diagnosis. Supports offline image caching for slow networks.</p>
 
           <div class="file-input" aria-hidden="false">
-            <label for="cropImage" role="button">📷 Upload Image</label>
+            <label for="cropImage" role="button" data-i18n="upload_label">📷 Upload Image</label>
             <input id="cropImage" type="file" accept="image/*" style="display:none" aria-label="Upload crop image">
-            <span id="fileName" class="muted small">No file chosen</span>
+            <span id="fileName" class="muted small" data-i18n="no_file">No file chosen</span>
           </div>
         </div>
 
@@ -538,7 +548,7 @@
     <button class="chatbot-toggle" id="chatToggle" aria-label="Open chat">💬</button>
 
     <div class="chat-container" id="chatbot" role="dialog" aria-modal="false" aria-label="AQ-FAS chat">
-      <div class="chat-header">AQ-FAS</div>
+  <div class="chat-header">AQ-FAS</div>
       <div class="chat-messages" id="chatMessages" aria-live="polite">
         <div class="message bot">🙏 Namaste! आज मैं आपकी फसलों में किस प्रकार मदद कर सकता हूँ?</div>
       </div>
@@ -547,8 +557,8 @@
         <input type="file" id="imageUpload" accept="image/*" style="display:none" />
         <button class="icon-btn" title="Upload Image" onclick="document.getElementById('imageUpload').click()">📷</button>
         <button class="icon-btn" title="Voice Input" id="voiceBtn">🎤</button>
-        <input type="text" id="userInput" placeholder="अपनी समस्या हमें बताएं......." aria-label="Type your message" />
-        <button class="send-btn" id="sendBtn">Send</button>
+        <input type="text" id="userInput" placeholder="अपनी समस्या हमें बताएं......." aria-label="Type your message" data-i18n-placeholder="chat_placeholder" />
+        <button class="send-btn" id="sendBtn" data-i18n="send_button">Send</button>
       </div>
     </div>
   </div>
@@ -563,6 +573,100 @@
 
   <!-- JS: small enhancements + accessibility + interactions -->
   <script>
+    // Translations object for multilingual support
+    const translations = {
+      en: {
+        nav_home: 'Home', nav_weather: 'Weather', nav_schemes: 'Gov Schemes', nav_market: 'Market', nav_diseases: 'Pest & Disease', nav_support: '24/7 Support',
+        support_badge: '24/7 SUPPORT', support_title: '24/7 Support', support_phone: '📞 Helpline: <strong>638975****</strong>', support_chat: '💬 Chat with experts anytime', support_email: '📧 Email: <strong>AQ-FAS06@Gmail.com</strong>',
+        hero_title: '🌾 AI-Based Farmer Advisory System', hero_sub: 'Empowering farmers with AI-driven insights, weather forecasts, market prices and government schemes — all in one place.',
+        start_chat: '💬 Start Chat', download_brochure: '📄 Download Brochure',
+        available_languages_label: 'Available Languages', available_languages_value: 'Hindi • English • Regional', offline_mode_label: 'Offline Mode', offline_mode_value: 'Yes (caching & local advisory)',
+        stat_active_farmers: 'Active Farmers', stat_avg_response: 'Avg Response Time', stat_crop_models: 'Crop Models',
+        feat_chatbot_title: '🤖 AI Chatbot Assistant', feat_chatbot_desc: 'Instant, context-aware answers based on your crop, location and past activities. Voice & image support included.',
+        feat_weather_title: '🌤️ Weather Detection', feat_weather_desc: 'Real-time weather and alerts to plan sprays, irrigation and harvest windows — minimize losses from extreme weather.',
+        feat_schemes_title: '🏛️ Government Schemes', feat_schemes_desc: 'Curated list of schemes you qualify for, with step-by-step application help and document checklists.',
+        feat_pest_title: '🦠 Pest & Disease Detection', feat_pest_desc: 'Upload images to receive AI diagnosis, recommended treatment and prevention tips tailored to your region.',
+        feat_market_title: '📈 Market Prices', feat_market_desc: 'Live mandi rates across regions so you can pick the right time and place to sell for the best price.', feat_support_title: '📞 24/7 Support', feat_support_desc: 'Round-the-clock access to verified experts — phone, chat and email support channels available.',
+        weather_title: '🌤️ Weather Forecast', schemes_title: '🏛️ Government Schemes for Farmers', market_title: '📈 Market Prices Today',
+        diseases_title: '🦠 Pest & Disease Management', upload_image_title: '📱 Upload Crop Image', upload_label: '📷 Upload Image', no_file: 'No file chosen',
+        chat_placeholder: 'Type your question here...', send_button: 'Send'
+      },
+      hi: {
+        nav_home: 'होम', nav_weather: 'मौसम', nav_schemes: 'सरकारी योजनाएँ', nav_market: 'बाजार', nav_diseases: 'कीट व रोग', nav_support: '24/7 सहायता',
+        support_badge: '24/7 सहायता', support_title: '24/7 सहायता', support_phone: '📞 हेल्पलाइन: <strong>638975****</strong>', support_chat: '💬 विशेषज्ञों से कभी भी चैट करें', support_email: '📧 ईमेल: <strong>AQ-FAS06@Gmail.com</strong>',
+        hero_title: '🌾 एआई-आधारित किसान सहायक', hero_sub: 'किसानों को AI आधारित सुझाव, मौसम पूर्वानुमान, मंडी भाव और सरकारी योजनाएँ एक ही जगह पर उपलब्ध कराएं।',
+        start_chat: '💬 चैट शुरू करें', download_brochure: '📄 ब्रोशर डाउनलोड करें',
+        available_languages_label: 'उपलब्ध भाषाएँ', available_languages_value: 'हिन्दी • अंग्रेज़ी • क्षेत्रीय', offline_mode_label: 'ऑफ़लाइन मोड', offline_mode_value: 'हां (कॅशिंग और स्थानीय सलाह)',
+        stat_active_farmers: 'सक्रिय किसान', stat_avg_response: 'औसत प्रतिक्रिया समय', stat_crop_models: 'फसल मॉडल',
+        feat_chatbot_title: '🤖 एआई चैटबॉट सहायक', feat_chatbot_desc: 'आपकी फसल, स्थान और पिछले डेटा के आधार पर त्वरित उत्तर। आवाज़ और इमेज सपोर्ट।',
+        feat_weather_title: '🌤️ मौसम की जानकारी', feat_weather_desc: 'स्प्रे, सिंचाई और कटाई योजनाओं के लिए रीयल-टाइम अलर्ट।',
+        feat_schemes_title: '🏛️ सरकारी योजनाएँ', feat_schemes_desc: 'आपके लिए उपयुक्त योजनाएँ और आवेदन सहायता।',
+        feat_pest_title: '🦠 कीट व रोग पहचान', feat_pest_desc: 'इमेज अपलोड करके AI निदान और उपचार सुझाव पाएं।',
+        feat_market_title: '📈 मंडी मूल्य', feat_market_desc: 'क्षेत्रीय मंडी दरें ताकि आप सबसे अच्छा समय चुन सकें।', feat_support_title: '📞 24/7 सहायता', feat_support_desc: 'विशेषज्ञ सहायता — फोन, चैट व ईमेल',
+        weather_title: '🌤️ मौसम पूर्वानुमान', schemes_title: '🏛️ किसानों के लिए सरकारी योजनाएँ', market_title: '📈 आज के मंडी भाव',
+        diseases_title: '🦠 कीट और रोग प्रबंधन', upload_image_title: '📱 फसल छवि अपलोड करें', upload_label: '📷 इमेज अपलोड करें', no_file: 'कोई फाइल नहीं चुनी गई',
+        chat_placeholder: 'अपना प्रश्न यहाँ टाइप करें...', send_button: 'भेजें'
+      },
+      ml: {
+        nav_home: 'ഹോം', nav_weather: 'വായു നില', nav_schemes: 'സർക്കാർ പദ്ധതികൾ', nav_market: 'ബസാർ', nav_diseases: 'പുറപ്പാട് & രോഗം', nav_support: '24/7 പിന്തുണ',
+        support_badge: '24/7 പിന്തുണ', support_title: '24/7 പിന്തുണ', support_phone: '📞 ഹെൽപ് ലൈൻ: <strong>638975****</strong>', support_chat: '💬 വിദഗ്ധരുമായി ഏഴും പത്തു چیätചാറ്റ് ചെയ്യാം', support_email: '📧 ഇമെയിൽ: <strong>AQ-FAS06@Gmail.com</strong>',
+        hero_title: '🌾 AI അടിസ്ഥാനത്തിലുള്ള കർഷക ഉപദേശം', hero_sub: 'AI പിന്തുണയുള്ള ഉപദേശങ്ങൾ, കാലാവസ്ഥ മുന്നറിയിപ്പ്, വിപണി നിരക്കുകൾ, സർക്കാർ പദ്ധതികൾ — എല്ലാം ഒരിടത്ത്.',
+        start_chat: '💬 ചാറ്റ് ആരംഭിക്കുക', download_brochure: '📄 ബ്രായ്ചർ ഡൗൺലോഡ് ചെയ്യുക',
+        available_languages_label: 'ലഭ്യമായ ഭാഷകൾ', available_languages_value: 'ഹിന്ദി • ഇംഗ്ലീഷ് • പ്രദേശിക', offline_mode_label: 'ഓഫ്‌ലൈൻ മോഡ്', offline_mode_value: 'അതെ (കാഷിംഗ് & ലോക്കൽ ഉപദേശം)',
+        stat_active_farmers: 'സജീവ കർഷകർ', stat_avg_response: 'ശരാശരി പ്രതികരണ സമയം', stat_crop_models: 'ഫല മോഡലുകൾ',
+        feat_chatbot_title: '🤖 AI ചാറ്റ്ബോട്ട് സഹായി', feat_chatbot_desc: 'ഫല, സ്ഥലം, മുൻപരിചയം എന്നിവ അടിസ്ഥാനമാക്കി_Context-aware_ ഉത്തരം. ശബ്‌ദവും ചിത്രം പിന്തുണയും.',
+        feat_weather_title: '🌤️ കാലാവസ്ഥ വിവരം', feat_weather_desc: 'സ്പ്രേ, സിഞ്ചൈ, കൊയ്ത്ത് സമയക്രമം എന്നിവയ്ക്ക്  റിയൽ-ടൈം മുന്നറിയിപ്പുകൾ.',
+        feat_schemes_title: '🏛️ സർക്കാർ പദ്ധതികൾ', feat_schemes_desc: 'നിങ്ങൾക്കായി യോഗ്യമായ പദ്ധതികളുടെ പട്ടികയും അപേക്ഷാ സഹായവും.',
+        feat_pest_title: '🦠 ഹാനികരികളും രോഗങ്ങളും', feat_pest_desc: 'ചിത്രം അപ്‌ലോഡ് ചെയ്ത് AI നിശ്ചയവും പ്രതിവിധികളും സ്വീകരിക്കുക.',
+        feat_market_title: '📈 വിപണി നിരക്കുകൾ', feat_market_desc: 'വിവിധ മേഖലകളിലെ വിപണി നിരക്കുകൾ ലഭ്യമാണ്.', feat_support_title: '📞 24/7 പിന്തുടർച്ച', feat_support_desc: 'ഫോൺ, ചാറ്റ്, ഇമെയിൽ വഴി വിദഗ്ധ പിന്തുണ ലഭ്യമാണ്.',
+        weather_title: '🌤️ കാലാവസ്ഥ പ്രവചനം', schemes_title: '🏛️ കർഷകർക്കുള്ള സർക്കാർ പദ്ധതികൾ', market_title: '📈 ഇന്ന് പ്രത്യയമുള്ള വിപണി നിരക്കുകൾ',
+        diseases_title: '🦠 കീടങ്ങളും രോഗങ്ങളും കൈമാറ്റം', upload_image_title: '📱 വിളപ്ലാൻ ചിത്രം അപ്ലോഡ് ചെയ്യുക', upload_label: '📷 ചിത്രം അപ്ലോഡ് ചെയ്യുക', no_file: 'ഫയൽ തിരഞ്ഞെടുക്കപ്പെട്ടിട്ടില്ല',
+        chat_placeholder: 'നിങ്ങളുടെ ചോദ്യം ഇവിടെ ടൈപ്പ് ചെയ്യുക...', send_button: 'അണയിക്കുക'
+      }
+    };
+
+    // Apply translations to elements with data-i18n or data-i18n-html or data-i18n-placeholder
+    function setLanguage(lang){
+      if(!translations[lang]) lang = 'en';
+      // persist
+      try{ localStorage.setItem('AQFAS_LANG', lang); } catch(e){}
+      // set select value if present
+      const sel = document.getElementById('langSelect'); if(sel) sel.value = lang;
+      // text replacements
+      document.querySelectorAll('[data-i18n]').forEach(el=>{
+        const key = el.getAttribute('data-i18n');
+        const txt = translations[lang][key] || translations['en'][key] || el.textContent;
+        el.innerText = txt;
+      });
+      // html replacements (safe-ish: translations contain small trusted HTML like <strong>)
+      document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+        const key = el.getAttribute('data-i18n-html');
+        const txt = translations[lang][key] || translations['en'][key] || el.innerHTML;
+        el.innerHTML = txt;
+      });
+      // placeholders
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+        const key = el.getAttribute('data-i18n-placeholder');
+        const txt = translations[lang][key] || translations['en'][key] || el.getAttribute('placeholder') || '';
+        el.setAttribute('placeholder', txt);
+      });
+    }
+
+    // initialize language on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const saved = (localStorage.getItem('AQFAS_LANG') || '').trim();
+      let lang = 'en';
+      if(saved && translations[saved]) lang = saved;
+      else {
+        const nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+        if(nav.startsWith('hi')) lang = 'hi';
+        else if(nav.startsWith('ml') || nav.startsWith('ml-')) lang = 'ml';
+      }
+      setLanguage(lang);
+      // wire selector
+      const sel = document.getElementById('langSelect');
+      if(sel) sel.addEventListener('change', (e)=> setLanguage(e.target.value));
+    });
     // Reveal animation on scroll (simple)
     (function(){
       const observer = new IntersectionObserver((entries)=>{
