@@ -1022,11 +1022,19 @@
        Real-time Weather (OpenWeatherMap)
        ---------------------------- */
     function getOpenWeatherKey(){
-      try{ return localStorage.getItem('AQFAS_OWM_KEY') || ''; } catch(e){ return ''; }
+      try{
+        // allow a hardcoded key during development by setting window.OPENWEATHER_API_KEY
+        if(window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()){
+          return String(window.OPENWEATHER_API_KEY).trim();
+        }
+        return localStorage.getItem('AQFAS_OWM_KEY') || '';
+      } catch(e){ return ''; }
     }
 
     function promptOpenWeatherKey(){
       try{
+        //tod api to keep in app settings
+        return"db67744e086e11d1776547938b4d959c";
         const existing = getOpenWeatherKey();
         if(existing) return existing;
         const k = window.prompt('Enter your OpenWeatherMap API key (free plan). It will be saved in localStorage for this site:');
@@ -1052,7 +1060,17 @@
       if(!key) throw new Error('OpenWeatherMap API key missing');
 
       const url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=metric&appid=${encodeURIComponent(key)}`;
-      const resp = await fetch(url);
+      let resp = await fetch(url);
+      // if unauthorized, clear saved key and prompt user once, then retry
+      if(resp.status === 401){
+        try{ localStorage.removeItem('AQFAS_OWM_KEY'); }catch(e){}
+        const newKey = promptOpenWeatherKey();
+        if(newKey){
+          const retryUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=metric&appid=${encodeURIComponent(newKey)}`;
+          resp = await fetch(retryUrl);
+        }
+      }
+
       if(!resp.ok) {
         const t = await resp.text().catch(()=>resp.statusText);
         throw new Error('Weather API error: ' + (t || resp.status));
