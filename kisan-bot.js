@@ -66,7 +66,12 @@
     function isFarmingRelated(text) {
       const t = (text || '').toLowerCase();
       const keywords = [
-        'kheti','kisan','fasal','bee?j','beej','miti','mitti','mitti','soil','paani','sinchayi','sinchai','sichai','irrigation','fertilizer','urvark','urvarak','pesticide','keet','keed','keeton','insect','spray','tractor','harvester','krishi','mandi','bazaar','msP','msp','subsidy','yojana','crop','seed','sowing','harvest','yield','weather','mausam','monsoon','barish','gehu','gehun','wheat','dhan','paddy','rice','cotton','sugarcane','soybean','pyaaz','pyaz','onion','tomato','tinda','dairy','poultry','animal husbandry','fpo','kharif','rabi','zaid','nursery','compost','organic','vermi','mulch','drip','sprinkler','soil test','ph','micro nutrient','micronutrient'
+        // English
+        'farm','farmer','farming','agriculture','agri','crop','harvest','yield','irrigation','drip','sprinkler','fertilizer','fertiliser','manure','compost','vermicompost','pesticide','herbicide','insecticide','fungicide','seed','sowing','planting','transplanting','nursery','greenhouse','green house','tractor','combine','harvester','storage','cold storage','post-harvest','market','mandi','mandi rate','market price','msp','kcc','kisan credit card','loan','subsidy','scheme','government scheme','fpo','farmer producer','organic','ipm','integrated pest management','soil test','ph','nitrogen','phosphorus','potassium','npk','micronutrient','micro nutrient','crop rotation','cover crop','mulch','green manure','irrigate','irrigation system','watering','water management','irrigation','pest','disease','blight','rust','aphid','locust','weed','weed control','spray','chemical','biofertilizer','yield improvement','postharvest','storage','cold room','silo','grading','packing','market access','mandi rates',
+        // Hindi / Hinglish (Devanagari + Romanized common forms)
+        'किसान','कृषि','खेती','फसल','फसाल','बीज','बिजन','बीज','बुवाई','बिजाई','काटाई','कटाई','फसल कटाई','मिट्टी','मिट्टी की जाँच','मिट्टी की जाँच','मिट्टी की जाँच','खाद','उर्वरक','खाद्य','जैविक','जैविक खेती','कम्पोस्ट','वर्मीकम्पोस्ट','कीटनाशक','कीट नाशक','फफूंदी','रोग','पेस्ट','बीमारी','सिंचाई','सिंचन','सिंचाई प्रबंधन','पानी','पानी की कमी','नल','ड्रिप','ड्रिप इरिगेशन','स्प्रिंकलर','ट्रैक्टर','हार्वेस्टर','खेत','किराना','मंडी','मंडी भाव','मंडी दर','मंडियाँ','सरकारी योजना','योजना','अनुदान','सब्सिडी','किसान क्रेडिट कार्ड','किसान संगठन','एफपीओ','खरिप','खरीफ','रबी','जायद','नर्सरी','जारिया','कटाई','कितना उत्पादन','उत्पादन','उत्पादन बढ़ाना','पानी प्रबंधन','सूखा','बदलाव','कीट','रोग निवारण','बीज प्रमाण','मंजूरी','कपास','चावल','गेहूँ','गन्ना','सोयाबीन','चना','चना','प्याज़','प्याज','टमाटर','आलू','मिर्च',
+        // Hinglish / Romanized Hindi common spellings
+        'kisan','krishi','kheti','fasal','beej','beej','miti','mitti','soil','paani','pani','sinchai','sinchayi','sinchayi','irrigation','urvarak','urvarak','fertilizer','fertiliser','keetanashak','keetanashak','keetanashak','keet','keetnashak','pesticide','pest','disease','crop','sowing','buwai','buwai','buwai','buraai','kharif','rabi','zaid','tractor','harvester','drip','sprinkler','compost','vermi','mulching','mulch','organic','biopesticide','npk','soil test','ph','micro nutrient','micronutrient','mandi','bazaar','mandi rate','msp','kcc','fpo','kisan credit','subsidy','yojana','scheme'
       ];
       return keywords.some(k => t.includes(k));
     }
@@ -75,11 +80,14 @@
       return 'Maaf kijiye, main sirf farming se jude sawaalon ka jawab de sakta hoon. Kripya kheti-badi, fasal, mitti, paani, keet niyantran, bazaar, ya sarkari yojana se related prashna poochiye.';
     }
 
-    async function askGemini(question) {
+    async function askGemini(question, lang = 'en') {
       const apiKey = getApiKey();
       if (!apiKey) {
         throw new Error('API key missing');
       }
+
+      const langMap = { en: 'English', hi: 'Hindi (Devanagari)', ml: 'Malayalam' };
+      const langInstruction = langMap[lang] || 'English';
 
       const systemInstructions = [
         'You are Kisan Mitra, a helpful farming assistant for Indian farmers.',
@@ -89,7 +97,7 @@
         'Prefer metric units. Add safety cautions for chemicals. Ask 1 clarifying question if location/variety is crucial.'
       ].join('\n');
 
-      const payloadText = `${systemInstructions}\n\nUser question: ${question}`;
+      const payloadText = `${systemInstructions}\n\nUser question: ${question}\n\nRespond in: ${langInstruction}. Use simple local words where appropriate.`;
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
       const body = {
@@ -122,11 +130,15 @@
       setLoading(true);
 
       try {
+        // Read language selection from page if available
+        const selEl = document.getElementById && document.getElementById('langSelect');
+        const lang = (selEl && selEl.value) || (localStorage.getItem('AQFAS_LANG') || 'en');
+
         if (!isFarmingRelated(q)) {
           addMessage('assistant', refusalMessage());
           return;
         }
-        const answer = await askGemini(q);
+        const answer = await askGemini(q, lang);
         addMessage('assistant', answer);
       } catch (e) {
         const msg = (e && e.message) ? e.message : String(e);
