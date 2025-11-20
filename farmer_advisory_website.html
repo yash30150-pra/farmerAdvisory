@@ -851,6 +851,9 @@
         // Hinglish / Romanized Hindi common spellings
         'kisan','krishi','kheti','fasal','beej','miti','mitti','soil','paani','pani','sinchai','sinchayi','irrigation','urvarak','fertilizer','fertiliser','keetanashak','keet','keetnashak','pesticide','pest','disease','crop','sowing','buwai','kharif','rabi','zaid','tractor','harvester','drip','sprinkler','compost','vermi','mulching','mulch','organic','biopesticide','npk','soil test','ph','micro nutrient','micronutrient','mandi','bazaar','mandi rate','msp','kcc','fpo','kisan credit','subsidy','yojana','scheme'
       ];
+      // Add common local food/crop terms used by farmers
+      const extra = ['chawal','चावल','rice','daal','दाल','dal','pulses','roti','रोटी','chapati','चपाती','chapatti','sabzi','सब्जी','tamatar','टमाटर','tomato'];
+      for (const e of extra) if(!keywords.includes(e)) keywords.push(e);
       return keywords.some(k => t.includes(k));
     }
 
