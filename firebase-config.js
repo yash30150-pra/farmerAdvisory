@@ -11,13 +11,13 @@
 
 // Replace these with your Firebase project credentials
 const firebaseConfig = {
-  apiKey: "AIzaSyDYourAPIKeyHere", // Get from Firebase Console > Project Settings
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  databaseURL: "https://your-project-id-default-rtdb.asia-southeast1.firebaseio.com",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123def456"
+  apiKey: "AIzaSyBizSWBQzyYpVNcHDzsvgeYdCq2VHLDXV8",
+  authDomain: "farmer-query-e02c6.firebaseapp.com",
+  projectId: "farmer-query-e02c6",
+  storageBucket: "farmer-query-e02c6.firebasestorage.app",
+  messagingSenderId: "994211780944",
+  appId: "1:994211780944:web:0244e3c05432f558ee7455",
+  measurementId: "G-SJ73M4WWNE"
 };
 
 // Initialize Firebase (only if not already initialized)

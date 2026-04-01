@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 Crop Recommendations - Farmer Advisory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #163a3a, #276172, #1e6c2d);
+            color: rgba(255, 255, 255, 0.95);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd24d;
+            text-decoration: none;
+        }
+
+        .logo .icon {
+            font-size: 1.8rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 600;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #2ecc71;
+            border-bottom: 2px solid #2ecc71;
+            padding-bottom: 3px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            color: #ffd24d;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Input Form */
+        .form-container {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: #ffd24d;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.8rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-group option {
+            background: #163a3a;
+            color: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #2ecc71;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #2ecc71, #25b86b);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Recommendations Grid */
+        .recommendations-container {
+            display: none;
+        }
+
+        .recommendations-header {
+            color: #ffd24d;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .recommendation-card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recommendation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #2ecc71, #25b86b);
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-8px);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .crop-emoji {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .crop-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2ecc71;
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation-score {
+            display: inline-block;
+            background: linear-gradient(90deg, rgba(46, 204, 113, 0.3), rgba(46, 204, 113, 0.1));
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #2ecc71;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .crop-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .detail-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .detail-value {
+            color: #ffd24d;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .crop-description {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.9rem;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .crop-benefits {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 3px solid #2ecc71;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+
+        .benefits-title {
+            color: #2ecc71;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .benefits-list li {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            margin: 0.3rem 0;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+
+        .benefits-list li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.7);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .recommendations-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .crop-details {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="dashboard.html" class="logo">
+                <span class="icon">🌾</span>
+                <span>Farmer Advisory</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">Home</a></li>
+                <li><a href="weather.html">Weather</a></li>
+                <li><a href="prices.html">Market Prices</a></li>
+                <li><a href="crops.html" class="active">Crops</a></li>
+                <li><a href="chat.html">Chat</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>🌱 Crop Recommendations</h1>
+            <p>AI-powered crop suggestions based on your location and conditions</p>
+        </div>
+
+        <!-- Input Form -->
+        <div class="form-container">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="location">📍 Location/Region</label>
+                    <select id="location">
+                        <option value="delhi">Delhi</option>
+                        <option value="maharashtra">Maharashtra</option>
+                        <option value="karnataka">Karnataka</option>
+                        <option value="punjab">Punjab</option>
+                        <option value="rajasthan">Rajasthan</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="season">🌤️ Season</label>
+                    <select id="season">
+                        <option value="kharif">Kharif (Monsoon)</option>
+                        <option value="rabi">Rabi (Winter)</option>
+                        <option value="summer">Summer</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="soilType">🌍 Soil Type</label>
+                    <select id="soilType">
+                        <option value="clay">Clay</option>
+                        <option value="sandy">Sandy</option>
+                        <option value="loamy">Loamy</option>
+                        <option value="mixed">Mixed</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="rainfall">💧 Annual Rainfall (mm)</label>
+                    <input type="number" id="rainfall" placeholder="e.g., 800" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="temperature">🌡️ Average Temperature (°C)</label>
+                    <input type="number" id="temperature" placeholder="e.g., 25" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="areaSize">📐 Farm Area (Acres)</label>
+                    <input type="number" id="areaSize" placeholder="e.g., 2.5" min="0">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="getRecommendations()">Get Recommendations</button>
+                <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="recommendations-container" id="recommendationsContainer">
+            <div class="recommendations-header">✨ Recommended Crops For You</div>
+            <div class="recommendations-grid" id="recommendationsGrid">
+                <!-- Will be populated by JS -->
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+            <div class="empty-state-icon">📋</div>
+            <p>Fill the form and click "Get Recommendations" to see suitable crops for your farm</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Farmer Advisory System. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Mock crop recommendation data
+        const cropDatabase = {
+            kharif: {
+                clay: {
+                    crops: [
+                        {
+                            name: "Rice",
+                            emoji: "🍚",
+                            score: 95,
+                            rainfall: "1500-2500mm",
+                            temperature: "20-30°C",
+                            duration: "120-150 days",
+                            description: "Best suited for clay soils with high moisture retention. Requires consistent water supply.",
+                            benefits: ["High yield potential", "Good market demand", "Water efficient", "Soil improvement"]
+                        },
+                        {
+                            name: "Sugarcane",
+                            emoji: "🌾",
+                            score: 88,
+                            rainfall: "1000-2250mm",
+                            temperature: "21-27°C",
+                            duration: "10-12 months",
+                            description: "Excellent for clay soils. Requires adequate irrigation and warm climate.",
+                            benefits: ["High return on investment", "Long crop cycle", "Soil protection", "Industrial value"]
+                        },
+                        {
+                            name: "Maize",
+                            emoji: "🌽",
+                            score: 82,
+                            rainfall: "500-1000mm",
+                            temperature: "21-27°C",
+                            duration: "80-120 days",
+                            description: "Adaptable to clay soils during monsoon season with proper drainage.",
+                            benefits: ["Quick maturity", "Versatile use", "Market value", "Low input"]
+                        }
+                    ]
+                },
+                sandy: {
+                    crops: [
+                        {
+                            name: "Millet",
+                            emoji: "🌾",
+                            score: 92,
+                            rainfall: "400-600mm",
+                            temperature: "25-35°C",
+                            duration: "70-90 days",
+                            description: "Highly drought resistant and perfect for sandy soils.",
+                            benefits: ["Drought tolerant", "Nutritious", "Low cost", "Climate resilient"]
+                        },
+                        {
+                            name: "Groundnut",
+                            emoji: "🥜",
+                            score: 89,
+                            rainfall: "500-1000mm",
+                            temperature: "24-30°C",
+                            duration: "120-150 days",
+                            description: "Excellent nitrogen fixing crop for sandy soils.",
+                            benefits: ["Soil enrichment", "High protein", "Market demand", "Pest resistant"]
+                        }
+                    ]
+                },
+                loamy: {
+                    crops: [
+                        {
+                            name: "Cotton",
+                            emoji: "🧵",
+                            score: 94,
+                            rainfall: "500-900mm",
+                            temperature: "21-30°C",
+                            duration: "180-210 days",
+                            description: "Ideal for loamy soils with balanced moisture and drainage.",
+                            benefits: ["High profitability", "Export potential", "Industrial use", "Good soil compatibility"]
+                        },
+                        {
+                            name: "Vegetables Mix",
+                            emoji: "🥬",
+                            score: 90,
+                            rainfall: "600-1200mm",
+                            temperature: "18-28°C",
+                            duration: "60-90 days",
+                            description: "Versatile crops suitable for loamy soil conditions.",
+                            benefits: ["Year-round income", "High value", "Organic potential", "Fresh market"]
+                        }
+                    ]
+                }
+            },
+            rabi: {
+                clay: {
+                    crops: [
+                        {
+                            name: "Wheat",
+                            emoji: "🌾",
+                            score: 93,
+                            rainfall: "400-600mm",
+                            temperature: "15-25°C",
+                            duration: "120-150 days",
+                            description: "Premier winter crop for clay soils. Requires moderate irrigation.",
+                            benefits: ["Staple crop", "Stable prices", "Good storage", "Large market"]
+                        },
+                        {
+                            name: "Chickpea",
+                            emoji: "🫘",
+                            score: 87,
+                            rainfall: "400-800mm",
+                            temperature: "15-20°C",
+                            duration: "100-120 days",
+                            description: "Nitrogen-fixing legume suitable for winter season.",
+                            benefits: ["Soil improvement", "High protein", "Export value", "Rotation crop"]
+                        }
+                    ]
+                },
+                sandy: {
+                    crops: [
+                        {
+                            name: "Lentil",
+                            emoji: "🫘",
+                            score: 85,
+                            rainfall: "300-400mm",
+                            temperature: "15-20°C",
+                            duration: "90-100 days",
+                            description: "Drought tolerant and suitable for winter cultivation.",
+                            benefits: ["Low water need", "Nutritious", "Export market", "Easy cultivation"]
+                        }
+                    ]
+                },
+                loamy: {
+                    crops: [
+                        {
+                            name: "Mustard",
+                            emoji: "🌱",
+                            score: 91,
+                            rainfall: "300-600mm",
+                            temperature: "10-25°C",
+                            duration: "100-120 days",
+                            description: "Oil crop with excellent market demand.",
+                            benefits: ["High oil content", "Export demand", "Soil health", "Quick return"]
+                        },
+                        {
+                            name: "Barley",
+                            emoji: "🌾",
+                            score: 88,
+                            rainfall: "300-600mm",
+                            temperature: "15-20°C",
+                            duration: "100-130 days",
+                            description: "Alternative winter grain crop.",
+                            benefits: ["Brewing use", "Animal feed", "Good yield", "Storage friendly"]
+                        }
+                    ]
+                }
+            },
+            summer: {
+                loamy: {
+                    crops: [
+                        {
+                            name: "Watermelon",
+                            emoji: "🍉",
+                            score: 89,
+                            rainfall: "400-600mm",
+                            temperature: "25-35°C",
+                            duration: "70-100 days",
+                            description: "High value summer crop for loamy soils.",
+                            benefits: ["High market price", "Quick returns", "Fresh market", "Good profit"]
+                        },
+                        {
+                            name: "Muskmelon",
+                            emoji: "🍈",
+                            score: 87,
+                            rainfall: "400-600mm",
+                            temperature: "25-35°C",
+                            duration: "60-90 days",
+                            description: "Premium summer vegetable crop.",
+                            benefits: ["High value", "Export potential", "Market demand", "Good margins"]
+                        }
+                    ]
+                }
+            }
+        };
+
+        function getRecommendations() {
+            const location = document.getElementById('location').value;
+            const season = document.getElementById('season').value;
+            const soilType = document.getElementById('soilType').value;
+            const rainfall = document.getElementById('rainfall').value;
+            const temperature = document.getElementById('temperature').value;
+
+            // Validate inputs
+            if (!rainfall || !temperature) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Get crops from database
+            const seasonCrops = cropDatabase[season];
+            const soilCrops = seasonCrops[soilType];
+
+            if (!soilCrops || !soilCrops.crops) {
+                alert('No recommendations available for selected combination');
+                return;
+            }
+
+            displayRecommendations(soilCrops.crops, location, season, soilType);
+        }
+
+        function displayRecommendations(crops, location, season, soilType) {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('recommendationsContainer').style.display = 'block';
+
+            const grid = document.getElementById('recommendationsGrid');
+            grid.innerHTML = '';
+
+            crops.forEach(crop => {
+                const card = document.createElement('div');
+                card.className = 'recommendation-card';
+                card.innerHTML = `
+                    <div class="crop-emoji">${crop.emoji}</div>
+                    <div class="crop-name">${crop.name}</div>
+                    <div class="recommendation-score">Match Score: ${crop.score}%</div>
+                    
+                    <div class="crop-details">
+                        <div class="detail-box">
+                            <div class="detail-label">💧 Rainfall</div>
+                            <div class="detail-value">${crop.rainfall}</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">🌡️ Temperature</div>
+                            <div class="detail-value">${crop.temperature}</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">📅 Duration</div>
+                            <div class="detail-value">${crop.duration}</div>
+                        </div>
+                        <div class="detail-box">
+                            <div class="detail-label">🌍 Soil Type</div>
+                            <div class="detail-value">${soilType}</div>
+                        </div>
+                    </div>
+
+                    <div class="crop-description">${crop.description}</div>
+
+                    <div class="crop-benefits">
+                        <div class="benefits-title">Key Benefits</div>
+                        <ul class="benefits-list">
+                            ${crop.benefits.map(benefit => `<li>${benefit}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('location').value = 'delhi';
+            document.getElementById('season').value = 'kharif';
+            document.getElementById('soilType').value = 'clay';
+            document.getElementById('rainfall').value = '';
+            document.getElementById('temperature').value = '';
+            document.getElementById('areaSize').value = '';
+            document.getElementById('recommendationsContainer').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+        }
+
+        // Allow Enter key to get recommendations
+        document.getElementById('rainfall').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') getRecommendations();
+        });
+
+        document.getElementById('temperature').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') getRecommendations();
+        });
+    </script>
+</body>
+</html>

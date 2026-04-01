@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💹 Market Prices - Farmer Advisory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #163a3a, #276172, #1e6c2d);
+            color: rgba(255, 255, 255, 0.95);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd24d;
+            text-decoration: none;
+        }
+
+        .logo .icon {
+            font-size: 1.8rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 600;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #2ecc71;
+            border-bottom: 2px solid #2ecc71;
+            padding-bottom: 3px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            color: #ffd24d;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Filters */
+        .filter-section {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 0.8rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .filter-select option {
+            background: #163a3a;
+            color: white;
+        }
+
+        /* Price Table */
+        .table-wrapper {
+            overflow-x: auto;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        thead {
+            background: rgba(46, 204, 113, 0.15);
+            border-bottom: 2px solid rgba(46, 204, 113, 0.3);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            color: #ffd24d;
+            font-weight: bold;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .crop-name {
+            font-weight: bold;
+            color: #2ecc71;
+        }
+
+        .price {
+            font-weight: bold;
+            font-size: 1.05rem;
+        }
+
+        .price-up {
+            color: #2ecc71;
+        }
+
+        .price-down {
+            color: #ff6b6b;
+        }
+
+        .price-stable {
+            color: #ffd24d;
+        }
+
+        .trend {
+            font-size: 0.9rem;
+        }
+
+        .trend-icon {
+            margin-right: 0.5rem;
+        }
+
+        /* Price Cards Grid */
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .price-card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .price-card:hover {
+            transform: translateY(-5px);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .price-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .price-card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+
+        .price-emoji {
+            font-size: 2rem;
+        }
+
+        .price-card-value {
+            font-size: 2rem;
+            color: #ffd24d;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-card-unit {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .price-card-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .info-label {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.7);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 3rem;
+        }
+
+        .last-updated {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .filter-section {
+                flex-direction: column;
+            }
+
+            .filter-select {
+                width: 100%;
+            }
+
+            .price-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-wrapper {
+                border-radius: 8px;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+
+            th, td {
+                padding: 0.7rem 0.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="dashboard.html" class="logo">
+                <span class="icon">🌾</span>
+                <span>Farmer Advisory</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">Home</a></li>
+                <li><a href="weather.html">Weather</a></li>
+                <li><a href="prices.html" class="active">Market Prices</a></li>
+                <li><a href="crops.html">Crops</a></li>
+                <li><a href="chat.html">Chat</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>💹 Market Prices</h1>
+            <p>Real-time crop prices and market trends for better decisions</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-section">
+            <select class="filter-select" id="marketFilter" onchange="filterByMarket()">
+                <option value="all">All Markets</option>
+                <option value="delhi">Delhi</option>
+                <option value="mumbai">Mumbai</option>
+                <option value="bangalore">Bangalore</option>
+            </select>
+            <select class="filter-select" id="categoryFilter" onchange="filterByCategory()">
+                <option value="all">All Categories</option>
+                <option value="cereals">Cereals</option>
+                <option value="pulses">Pulses</option>
+                <option value="vegetables">Vegetables</option>
+            </select>
+        </div>
+
+        <!-- Price Cards Grid -->
+        <div class="price-grid" id="priceGrid">
+            <!-- Will be populated by JS -->
+        </div>
+
+        <!-- Price Table -->
+        <div style="margin-top: 2rem;">
+            <h2 style="color: #ffd24d; margin-bottom: 1.5rem;">📊 Detailed Price List</h2>
+            <div class="table-wrapper">
+                <table id="priceTable">
+                    <thead>
+                        <tr>
+                            <th>Crop</th>
+                            <th>Category</th>
+                            <th>Market</th>
+                            <th>Price (₹/Quintal)</th>
+                            <th>Trend</th>
+                            <th>Change %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Will be populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="last-updated">
+            📅 Last Updated: <span id="lastUpdated">Today</span>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Farmer Advisory System. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Mock market data
+        const marketData = [
+            {
+                id: 1,
+                crop: "Wheat",
+                emoji: "🌾",
+                category: "cereals",
+                market: "delhi",
+                currentPrice: 2500,
+                previousPrice: 2400,
+                trend: "up",
+                change: 4.2,
+                minPrice: 2400,
+                maxPrice: 2650,
+                unit: "₹/Quintal"
+            },
+            {
+                id: 2,
+                crop: "Rice",
+                emoji: "🍚",
+                category: "cereals",
+                market: "delhi",
+                currentPrice: 3200,
+                previousPrice: 3150,
+                trend: "up",
+                change: 1.6,
+                minPrice: 3100,
+                maxPrice: 3300,
+                unit: "₹/Quintal"
+            },
+            {
+                id: 3,
+                crop: "Lentils",
+                emoji: "🫘",
+                category: "pulses",
+                market: "delhi",
+                currentPrice: 6500,
+                previousPrice: 6700,
+                trend: "down",
+                change: -2.9,
+                minPrice: 6300,
+                maxPrice: 7000,
+                unit: "₹/Quintal"
+            },
+            {
+                id: 4,
+                crop: "Chickpeas",
+                emoji: "🫘",
+                category: "pulses",
+                market: "mumbai",
+                currentPrice: 7200,
+                previousPrice: 7000,
+                trend: "up",
+                change: 3.1,
+                minPrice: 6900,
+                maxPrice: 7500,
+                unit: "₹/Quintal"
+            },
+            {
+                id: 5,
+                crop: "Tomato",
+                emoji: "🍅",
+                category: "vegetables",
+                market: "bangalore",
+                currentPrice: 1800,
+                previousPrice: 1900,
+                trend: "down",
+                change: -5.3,
+                minPrice: 1500,
+                maxPrice: 2200,
+                unit: "₹/Quintal"
+            },
+            {
+                id: 6,
+                crop: "Onion",
+                emoji: "🧅",
+                category: "vegetables",
+                market: "mumbai",
+                currentPrice: 2100,
+                previousPrice: 2000,
+                trend: "up",
+                change: 5.0,
+                minPrice: 1800,
+                maxPrice: 2400,
+                unit: "₹/Quintal"
+            },
+            {
+                id: 7,
+                crop: "Potato",
+                emoji: "🥔",
+                category: "vegetables",
+                market: "delhi",
+                currentPrice: 900,
+                previousPrice: 950,
+                trend: "down",
+                change: -5.3,
+                minPrice: 800,
+                maxPrice: 1100,
+                unit: "₹/Quintal"
+            },
+            {
+                id: 8,
+                crop: "Maize",
+                emoji: "🌽",
+                category: "cereals",
+                market: "bangalore",
+                currentPrice: 1900,
+                previousPrice: 1850,
+                trend: "up",
+                change: 2.7,
+                minPrice: 1800,
+                maxPrice: 2100,
+                unit: "₹/Quintal"
+            }
+        ];
+
+        let filteredData = [...marketData];
+
+        function getTrendIcon(trend) {
+            return trend === 'up' ? '📈' : '📉';
+        }
+
+        function getTrendClass(trend) {
+            return trend === 'up' ? 'price-up' : 'price-down';
+        }
+
+        function renderPriceCards(data) {
+            const grid = document.getElementById('priceGrid');
+            grid.innerHTML = '';
+
+            data.forEach(item => {
+                const changeClass = item.trend === 'up' ? 'price-up' : 'price-down';
+                const changeSymbol = item.trend === 'up' ? '▲' : '▼';
+
+                const card = document.createElement('div');
+                card.className = 'price-card';
+                card.innerHTML = `
+                    <div class="price-card-header">
+                        <div>
+                            <div class="price-card-title">${item.crop}</div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">${item.market.toUpperCase()}</div>
+                        </div>
+                        <div class="price-emoji">${item.emoji}</div>
+                    </div>
+                    <div class="price-card-value">₹ ${item.currentPrice}</div>
+                    <div class="price-card-unit">${item.unit}</div>
+                    <div class="price-card-info">
+                        <div class="info-item">
+                            <div class="info-label">Min Price</div>
+                            <div class="info-value">₹ ${item.minPrice}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Max Price</div>
+                            <div class="info-value">₹ ${item.maxPrice}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Trend</div>
+                            <div class="info-value ${changeClass}">${getTrendIcon(item.trend)} ${item.change}%</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Category</div>
+                            <div class="info-value" style="color: #ffd24d;">${item.category}</div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            data.forEach(item => {
+                const trendIcon = getTrendIcon(item.trend);
+                const changeClass = getTrendClass(item.trend);
+                const changeSymbol = item.trend === 'up' ? '▲' : '▼';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="crop-name">${item.emoji} ${item.crop}</td>
+                    <td>${item.category}</td>
+                    <td>${item.market.toUpperCase()}</td>
+                    <td class="price">₹ ${item.currentPrice}</td>
+                    <td><span class="trend"><span class="trend-icon">${trendIcon}</span><span class="${changeClass}">${changeSymbol}</span></span></td>
+                    <td class="${changeClass}">${item.change > 0 ? '+' : ''}${item.change}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterByMarket() {
+            const market = document.getElementById('marketFilter').value;
+            const category = document.getElementById('categoryFilter').value;
+
+            filteredData = marketData.filter(item => {
+                const marketMatch = market === 'all' || item.market === market;
+                const categoryMatch = category === 'all' || item.category === category;
+                return marketMatch && categoryMatch;
+            });
+
+            renderPriceCards(filteredData);
+            renderTable(filteredData);
+        }
+
+        function filterByCategory() {
+            filterByMarket(); // Re-apply both filters
+        }
+
+        // Initial render
+        window.addEventListener('load', function() {
+            renderPriceCards(filteredData);
+            renderTable(filteredData);
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString();
+        });
+    </script>
+</body>
+</html>

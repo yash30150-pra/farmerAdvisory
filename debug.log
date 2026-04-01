@@ -1,0 +1,25 @@
+
+> farmer-advisory@1.0.0 start
+> expo start
+
+Starting project at D:\react-app
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  react@18.2.0 - expected version: 19.1.0
+  react-native@0.76.0 - expected version: 0.81.5
+  expo-location@17.0.1 - expected version: ~19.0.7
+  expo-device@6.0.2 - expected version: ~8.0.9
+  react-native-screens@4.18.0 - expected version: ~4.16.0
+  @react-native-async-storage/async-storage@1.24.0 - expected version: 2.2.0
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Error: Crc error - 218770864 - -1311445661
+    at t.exports.n._parseChunkEnd (D:\react-app\node_modules\jimp-compact\dist\jimp.js:1:514593)
+    at t.exports.e.process (D:\react-app\node_modules\jimp-compact\dist\jimp.js:1:40580)
+    at t.exports (D:\react-app\node_modules\jimp-compact\dist\jimp.js:1:419827)
+    at Object.e.read [as image/png] (D:\react-app\node_modules\jimp-compact\dist\jimp.js:1:1865)
+    at Jimp.parseBitmap (D:\react-app\node_modules\jimp-compact\dist\jimp.js:1:125704)
+    at Jimp.parseBitmap (D:\react-app\node_modules\jimp-compact\dist\jimp.js:1:8514)
+    at D:\react-app\node_modules\jimp-compact\dist\jimp.js:1:7613
+    at FSReqCallback.readFileAfterClose [as oncomplete] (node:internal/fs/read/context:68:3)

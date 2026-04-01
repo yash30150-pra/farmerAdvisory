@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💬 Expert Chat - Farmer Advisory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #163a3a, #276172, #1e6c2d);
+            color: rgba(255, 255, 255, 0.95);
+            min-height: 100vh;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd24d;
+            text-decoration: none;
+        }
+
+        .logo .icon {
+            font-size: 1.8rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 600;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #2ecc71;
+            border-bottom: 2px solid #2ecc71;
+            padding-bottom: 3px;
+        }
+
+        /* Main Chat Container */
+        .chat-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1000px;
+            margin: 2rem auto;
+            width: 100%;
+            padding: 0 1rem;
+        }
+
+        .chat-header {
+            background: linear-gradient(90deg, #2ecc71, #25b86b);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px 12px 0 0;
+            font-size: 1.3rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .chat-header-icon {
+            font-size: 1.8rem;
+        }
+
+        .chat-info {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            font-weight: normal;
+            margin-left: auto;
+        }
+
+        /* Chat Messages Container */
+        .chat-messages {
+            flex: 1;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: none;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 400px;
+        }
+
+        .message {
+            display: flex;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(90deg, #2ecc71, #25b86b);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .message-content {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.08));
+            color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 0.8rem 1rem;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.5;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Chat Input Area */
+        .chat-input-area {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            padding: 1.2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .input-field {
+            flex: 1;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-field input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .input-field input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .input-field input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #2ecc71;
+        }
+
+        .send-btn {
+            padding: 0.8rem 1.2rem;
+            background: linear-gradient(90deg, #2ecc71, #25b86b);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .send-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Quick Suggestions */
+        .suggestions {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .suggestion-btn {
+            padding: 0.6rem 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-btn:hover {
+            background: rgba(46, 204, 113, 0.2);
+            border-color: #2ecc71;
+            color: #2ecc71;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            margin-top: auto;
+        }
+
+        @media (max-width: 768px) {
+            .chat-wrapper {
+                margin: 1rem auto;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .chat-messages {
+                min-height: 300px;
+            }
+
+            .chat-input-area {
+                flex-wrap: wrap;
+            }
+
+            .input-field {
+                flex-basis: 100%;
+                order: 2;
+            }
+
+            .send-btn {
+                flex-basis: 100%;
+                order: 3;
+            }
+
+            .suggestions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chat-wrapper {
+                padding: 0;
+                margin: 1rem 0;
+                border-radius: 0;
+            }
+
+            .chat-header,
+            .chat-messages,
+            .chat-input-area {
+                border-radius: 0;
+            }
+
+            .message-content {
+                max-width: 90%;
+            }
+
+            .suggestions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="dashboard.html" class="logo">
+                <span class="icon">🌾</span>
+                <span>Farmer Advisory</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">Home</a></li>
+                <li><a href="weather.html">Weather</a></li>
+                <li><a href="prices.html">Market Prices</a></li>
+                <li><a href="crops.html">Crops</a></li>
+                <li><a href="chat.html" class="active">Chat</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Chat Container -->
+    <div class="chat-wrapper">
+        <div class="chat-header">
+            <div class="chat-header-icon">💬</div>
+            <div>
+                <div>Agricultural Expert AI</div>
+                <div class="chat-info">Always available to help</div>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    👋 Hello! I'm your agricultural expert AI assistant. I can help you with crop selection, farming techniques, pest management, weather insights, and market prices. What would you like to know today?
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="input-field">
+                <input 
+                    type="text" 
+                    id="chatInput" 
+                    placeholder="Ask about crops, weather, pest control, prices..." 
+                    autocomplete="off"
+                >
+                <button class="send-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Suggestions (below chat) -->
+    <div style="max-width: 1000px; margin: 1.5rem auto; width: 100%; padding: 0 1rem;">
+        <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 0.8rem;">💡 Quick Questions:</div>
+        <div class="suggestions">
+            <button class="suggestion-btn" onclick="askQuestion('What crops should I grow in monsoon season?')">Monsoon Crops</button>
+            <button class="suggestion-btn" onclick="askQuestion('How to prevent crop diseases?')">Disease Prevention</button>
+            <button class="suggestion-btn" onclick="askQuestion('Best time to harvest wheat?')">Harvest Time</button>
+            <button class="suggestion-btn" onclick="askQuestion('Current market prices for crops?')">Market Prices</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Farmer Advisory System. Powered by AI | Your trusted farming companion</p>
+    </footer>
+
+    <script>
+        // Mock AI responses
+        const aiResponses = {
+            "monsoon": "During monsoon season (Kharif), you can grow rice, maize, cotton, sugarcane, pulses, and various vegetables. Choose crops based on your soil type and local rainfall patterns.",
+            "winter": "Rabi season crops include wheat, barley, chickpeas, lentils, mustard, and various winter vegetables. These crops thrive in cooler temperatures (10-25°C).",
+            "harvest": "Harvest timing depends on the crop type. Generally, harvest when grains are golden/brown and dry. Rice: 120-150 days, Wheat: 120-150 days, Cotton: 180-210 days.",
+            "disease": "Common disease prevention methods:\n1. Crop rotation\n2. Use disease-resistant varieties\n3. Proper irrigation management\n4. Timely application of fungicides/pesticides\n5. Good field sanitation",
+            "price": "Market prices vary by location and season. Check local mandis for current prices. Generally, staple crops (wheat, rice) have stable prices, while vegetables have volatile prices.",
+            "soil": "Soil testing is crucial. Clay soils retain moisture well (good for rice), sandy soils need irrigation (good for millets), loamy soils are versatile. Conduct soil test for pH, nutrients, and composition.",
+            "irrigation": "Irrigation needs vary: Rice needs 40-60cm water, Wheat needs 40-50cm, Cotton needs 50-65cm. Use drip irrigation for vegetables to save water and reduce disease.",
+            "pest": "Common pests: Armyworm, Stem borer, Aphids. Prevention: Use resistant varieties, maintain field hygiene, intercropping, and biological pest control before chemical pesticides.",
+            "fertilizer": "Balanced fertilization: NPK ratio varies by crop. Use organic compost (5-10 tons/hectare) + chemical fertilizers based on soil test results. Avoid over-fertilization.",
+            "weather": "Check weather forecasts regularly. High rainfall? Ensure drainage. Frost risk? Cover crops. Heatwave? Increase irrigation. Adapt farming practices based on weather patterns."
+        };
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+            input.focus();
+
+            // Simulate typing delay and send bot response
+            setTimeout(() => {
+                const response = getAIResponse(message);
+                addMessage(response, 'bot');
+            }, 500);
+        }
+
+        function addMessage(text, sender) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${sender}`;
+            messageElement.innerHTML = `<div class="message-content">${text}</div>`;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function getAIResponse(userMessage) {
+            const lowerMessage = userMessage.toLowerCase();
+
+            // Simple keyword matching for mock responses
+            for (const [keyword, response] of Object.entries(aiResponses)) {
+                if (lowerMessage.includes(keyword)) {
+                    return response;
+                }
+            }
+
+            // Default responses if no keyword match
+            if (lowerMessage.includes('how') || lowerMessage.includes('help') || lowerMessage.includes('what')) {
+                return "I can help with:\n• Crop selection and recommendations\n• Seasonal farming tips\n• Pest and disease management\n• Market prices\n• Irrigation techniques\n• Soil preparation\n• Weather-based farming\n\nWhat specific topic interests you?";
+            }
+
+            if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
+                return "You're welcome! Feel free to ask more questions about farming. I'm here to help! 🌾";
+            }
+
+            if (lowerMessage.includes('hi') || lowerMessage.includes('hello')) {
+                return "Hello! How can I assist you with your farming today? Need advice on crops, weather, pests, or market information?";
+            }
+
+            // Generic fallback response
+            return "That's a great question! For specific guidance, I recommend:\n1. Checking your local weather forecast\n2. Testing your soil\n3. Consulting with local agricultural experts\n4. Reviewing our weather and prices sections\n\nIs there something specific I can help clarify?";
+        }
+
+        function askQuestion(question) {
+            document.getElementById('chatInput').value = question;
+            sendMessage();
+        }
+
+        // Allow Enter key to send message
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Focus input on page load
+        window.addEventListener('load', function() {
+            document.getElementById('chatInput').focus();
+        });
+    </script>
+</body>
+</html>

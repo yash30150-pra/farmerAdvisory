@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Farmer Advisory",
+    "slug": "farmer-advisory",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTabletMode": true,
+      "bundleIdentifier": "com.farmeradvisory.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to provide weather and agricultural information."
+      }
+    },
+    "android": {
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.INTERNET"
+      ],
+      "package": "com.farmeradvisory.app"
+    },
+    "web": {
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Farmer Advisory to access your location."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "farmer-advisory-app"
+      }
+    }
+  }
+}
+

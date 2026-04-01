@@ -375,8 +375,21 @@
   <div class="contact-modal" id="settingsModal" role="dialog" aria-modal="false" aria-labelledby="settingsTitle" style="display:none; width:340px;">
     <h4 id="settingsTitle">Settings</h4>
     <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+      
+      <!-- LLM Vendor Selector -->
+      <label style="font-weight:700; font-size:0.95rem">LLM Vendor</label>
+      <select id="llmVendorSelect" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);">
+        <option value="gemini">🔵 Google Gemini (Fast)</option>
+        <option value="openai">🟠 OpenAI (GPT-3.5)</option>
+        <option value="perplexity">🔷 Perplexity (Research)</option>
+      </select>
+      
       <label style="font-weight:700; font-size:0.95rem">Gemini API Key</label>
       <input id="geminiKeyInput" type="text" placeholder="Paste Gemini API key here" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);" />
+      <label style="font-weight:700; font-size:0.95rem">OpenAI API Key</label>
+      <input id="openaiKeyInput" type="text" placeholder="Paste OpenAI API key here" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);" />
+      <label style="font-weight:700; font-size:0.95rem">Perplexity API Key</label>
+      <input id="perplexityKeyInput" type="text" placeholder="Paste Perplexity API key here" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);" />
       <label style="font-weight:700; font-size:0.95rem">OpenWeather API Key</label>
       <input id="owmKeyInput" type="text" placeholder="Paste OpenWeatherMap API key here" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);" />
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:6px;">
@@ -831,6 +844,29 @@
       chatMessages
     };
 
+    // ============================================================
+    // LLM VENDOR CONFIGURATION & SWITCHING
+    // ============================================================
+    
+    // Global setting to switch between vendors
+    // Can be: 'gemini' or 'openai'
+    // Set this to change which LLM provider is used
+    window.LLM_VENDOR = window.LLM_VENDOR || localStorage.getItem('LLM_VENDOR') || 'gemini';
+
+    function setLLMVendor(vendor) {
+      if (['gemini', 'openai', 'perplexity'].includes(vendor)) {
+        window.LLM_VENDOR = vendor;
+        localStorage.setItem('LLM_VENDOR', vendor);
+        console.log('✅ LLM Vendor switched to:', vendor);
+      } else {
+        console.error('❌ Invalid vendor. Use "gemini", "openai", or "perplexity"');
+      }
+    }
+
+    function getLLMVendor() {
+      return window.LLM_VENDOR;
+    }
+
     function getApiKey(){
       // Prefer an explicit runtime override (window.GEMINI_API_KEY), then localStorage.
       // If missing, prompt the user once and save to localStorage for convenience.
@@ -839,10 +875,44 @@
           return String(window.GEMINI_API_KEY).trim();
         }
         let key = localStorage.getItem('GEMINI_API_KEY');
-        if(!key){
+        if(!key){ 
           // Prompting is a last resort. User can also paste key in Settings.
           key = window.prompt('Enter your Google Gemini API key (will be saved to localStorage for this site):');
           if(key) localStorage.setItem('GEMINI_API_KEY', key.trim());
+        }
+        return key && key.trim();
+      } catch(e){
+        return null;
+      }
+    }
+
+    function getOpenAIKey(){
+      // Prefer an explicit runtime override, then localStorage
+      try{
+        if(window.OPENAI_API_KEY && String(window.OPENAI_API_KEY).trim()){
+          return String(window.OPENAI_API_KEY).trim();
+        }
+        let key = localStorage.getItem('OPENAI_API_KEY');
+        if(!key){
+          key = window.prompt('Enter your OpenAI API key (will be saved to localStorage for this site):');
+          if(key) localStorage.setItem('OPENAI_API_KEY', key.trim());
+        }
+        return key && key.trim();
+      } catch(e){
+        return null;
+      }
+    }
+
+    function getPerplexityKey(){
+      // Prefer an explicit runtime override, then localStorage
+      try{
+        if(window.PERPLEXITY_API_KEY && String(window.PERPLEXITY_API_KEY).trim()){
+          return String(window.PERPLEXITY_API_KEY).trim();
+        }
+        let key = localStorage.getItem('PERPLEXITY_API_KEY');
+        if(!key){
+          key = window.prompt('Enter your Perplexity API key (will be saved to localStorage for this site):');
+          if(key) localStorage.setItem('PERPLEXITY_API_KEY', key.trim());
         }
         return key && key.trim();
       } catch(e){
@@ -870,28 +940,98 @@
       return 'Maaf kijiye, main sirf farming se jude sawaalon ka jawab de sakta hoon. Kripya kheti-badi, fasal, mitti, paani, keet niyantran, bazaar, ya sarkari yojana se related prashna poochiye.';
     }
 
-    async function askGemini(question, lang = 'en') {
-      const apiKey = getApiKey();
-      if (!apiKey) {
-        throw new Error('API key missing');
-      }
-      // Map short codes to human-friendly language instructions
+    // ============================================================
+    // SHARED FARMING SYSTEM INSTRUCTIONS
+    // ============================================================
+    function getFarmingSystemInstructions(lang = 'en') {
       const langMap = {
         en: 'English',
         hi: 'Hindi (use simple Devanagari script)',
         ml: 'Malayalam'
       };
-
       const langInstruction = langMap[lang] || 'English';
 
-      const systemInstructions = [
-        'You are Kisan Mitra, a helpful farming assistant for Indian farmers.',
-        'Answer ONLY agriculture/farming related queries (crops, soil, water/irrigation, pests/diseases, fertilizers, organic practices, agri-machinery, weather, mandi/bazaar rates, government schemes).',
-        'If a query is not related to farming, briefly refuse: "Main sirf farming se jude sawaalon ka jawab de sakta hoon." and ask for a farming topic.',
-        'Style: Hinglish (mix simple Hindi + English), clear, friendly, practical. Use short steps or bullet points when useful.',
-        'Prefer metric units. Add safety cautions for chemicals. Ask 1 clarifying question if location/variety is crucial.'
-      ].join('\n');
+      // Comprehensive farming keywords list (from isFarmingRelated function)
+      const farmingKeywords = [
+        'farm', 'farmer', 'farming', 'agriculture', 'agri', 'crop', 'harvest', 'yield', 'irrigation', 'drip', 'sprinkler',
+        'fertilizer', 'fertiliser', 'manure', 'compost', 'vermicompost', 'pesticide', 'herbicide', 'insecticide', 'fungicide',
+        'seed', 'sowing', 'planting', 'transplanting', 'nursery', 'greenhouse', 'tractor', 'combine', 'harvester', 'storage',
+        'cold storage', 'post-harvest', 'market', 'mandi', 'mandi rate', 'market price', 'msp', 'kcc', 'loan', 'subsidy',
+        'scheme', 'government scheme', 'fpo', 'farmer producer', 'organic', 'ipm', 'integrated pest management', 'soil test',
+        'ph', 'nitrogen', 'phosphorus', 'potassium', 'npk', 'micronutrient', 'crop rotation', 'cover crop', 'mulch',
+        'green manure', 'irrigate', 'irrigation system', 'watering', 'water management', 'pest', 'disease', 'blight', 'rust',
+        'aphid', 'locust', 'weed', 'weed control', 'spray', 'chemical', 'biofertilizer', 'yield improvement', 'postharvest',
+        'cold room', 'silo', 'grading', 'packing', 'market access', 'mandi rates', 'kisan credit card',
+        'किसान', 'कृषि', 'खेती', 'फसल', 'बीज', 'बुवाई', 'कटाई', 'मिट्टी', 'खाद', 'उर्वरक', 'जैविक', 'कम्पोस्ट', 'कीटनाशक',
+        'रोग', 'पेस्ट', 'बीमारी', 'सिंचाई', 'पानी', 'ड्रिप', 'स्प्रिंकलर', 'ट्रैक्टर', 'हार्वेस्टर', 'खेत', 'मंडी', 'योजना',
+        'अनुदान', 'सब्सिडी', 'एफपीओ', 'खरिप', 'खरीफ', 'रबी', 'जायद', 'नर्सरी', 'उत्पादन', 'बीज प्रमाण', 'कपास', 'चावल', 'गेहूँ',
+        'kisan', 'krishi', 'kheti', 'fasal', 'beej', 'miti', 'mitti', 'soil', 'paani', 'pani', 'sinchai', 'irrigation', 'urvarak',
+        'keetanashak', 'keet', 'pesticide', 'crop', 'sowing', 'buwai', 'kharif', 'rabi', 'zaid', 'tractor', 'harvester',
+        'drip', 'sprinkler', 'compost', 'vermi', 'mulching', 'mulch', 'organic', 'biopesticide', 'npk', 'soil test', 'ph',
+        'mandi', 'bazaar', 'mandi rate', 'msp', 'kcc', 'fpo', 'kisan credit', 'subsidy', 'yojana', 'scheme',
+        'chawal', 'चावल', 'rice', 'daal', 'दाल', 'dal', 'pulses', 'roti', 'रोटी', 'chapati', 'चपाती', 'chapatti', 'sabzi',
+        'सब्जी', 'tamatar', 'टमाटर', 'tomato'
+      ];
 
+      const instructions = [
+        '⚠️ STRICT FARMING ONLY MODE ⚠️',
+        'You are Kisan Mitra, a SPECIALIZED farming assistant exclusively for Indian farmers.',
+        '',
+        'CRITICAL RULES:',
+        '1. ONLY answer questions about farming/agriculture. Examples of VALID topics:',
+        '   • Crops (rice, wheat, corn, vegetables, fruits, cotton, sugarcane, etc.)',
+        '   • Soil management, testing, fertility, pH levels',
+        '   • Irrigation, water management, drainage systems',
+        '   • Fertilizers, compost, manure, organic practices',
+        '   • Pests, diseases, crop protection, pesticides',
+        '   • Seeds, seedlings, nursery management',
+        '   • Harvesting, post-harvest handling, storage',
+        '   • Agricultural machinery (tractors, harvesters, sprayers)',
+        '   • Market prices (mandi rates, MSP - Minimum Support Price)',
+        '   • Government schemes, loans (KCC), subsidies, FPO',
+        '   • Weather impact on crops',
+        '',
+        '2. REJECT (refuse firmly but respectfully) ANY question about:',
+        '   • Sports, movies, entertainment, politics, religion',
+        '   • General knowledge not related to farming',
+        '   • Cooking, recipes, food preparation (UNLESS it\'s about crop post-harvest)',
+        '   • Personal advice, medical advice, life coaching',
+        '   • Any topic not directly related to farming/agriculture',
+        '',
+        '3. REFUSAL MESSAGE (use this exact message when rejecting non-farming queries):',
+        '   "Maaf kijiye, main sirf farming se jude sawaalon ka jawab de sakta hoon.',
+        '    Kripya kheti-badi, fasal, mitti, paani, keet niyantran, bazaar, ya sarkari yojana se related prashna poochiye."',
+        '',
+        '4. FARMING KEYWORDS (if query contains ANY of these words, it\'s likely farming-related):',
+        `   ${farmingKeywords.join(', ')}`,
+        '',
+        '5. RESPONSE STYLE:',
+        '   • Language: Hinglish (mix simple Hindi + English), or the requested language',
+        '   • Format: Clear, friendly, practical. Use bullet points for steps.',
+        '   • Units: Use metric units (kg, liters, hectares, etc.)',
+        '   • Safety: Always add safety cautions for chemicals/pesticides',
+        '   • Clarification: Ask 1 follow-up question if location/crop variety/season is crucial',
+        '',
+        '6. DO NOT provide general knowledge answers - ONLY farming expertise',
+        '   Example: If asked "What is photosynthesis?" - REJECT it',
+        '   Only answer if context is "How does photosynthesis help crop growth?"',
+        ''
+      ];
+
+      const systemInstructions = instructions.join('\n');
+      return { systemInstructions, langInstruction };
+    }
+
+    // ============================================================
+    // GEMINI API METHOD
+    // ============================================================
+    async function askGemini(question, lang = 'en') {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        throw new Error('Gemini API key missing');
+      }
+
+      const { systemInstructions, langInstruction } = getFarmingSystemInstructions(lang);
       const payloadText = `${systemInstructions}\n\nUser question: ${question}\n\nRespond in: ${langInstruction}. If you cannot translate technical terms, use simple Hinglish explanations.`;
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -917,6 +1057,110 @@
       return out.trim() || 'Mujhe sahi jawaab nahi mila. Kripya sawaal ko thoda aur saaf tarike se likhiye.';
     }
 
+    // ============================================================
+    // OPENAI API METHOD
+    // ============================================================
+    async function askOpenAI(question, lang = 'en') {
+      const apiKey = getOpenAIKey();
+      if (!apiKey) {
+        throw new Error('OpenAI API key missing');
+      }
+
+      const { systemInstructions, langInstruction } = getFarmingSystemInstructions(lang);
+
+      const url = 'https://api.openai.com/v1/chat/completions';
+      const body = {
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: systemInstructions },
+          { role: 'user', content: question }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      };
+
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`OpenAI error: ${resp.status} ${text}`);
+      }
+
+      const data = await resp.json();
+      const out = data?.choices?.[0]?.message?.content || '';
+      return out.trim() || 'Mujhe sahi jawaab nahi mila. Kripya sawaal ko thoda aur saaf tarike se likhiye.';
+    }
+
+    // ============================================================
+    // PERPLEXITY API METHOD
+    // ============================================================
+    async function askPerplexity(question, lang = 'en') {
+      const apiKey = getPerplexityKey();
+      if (!apiKey) {
+        throw new Error('Perplexity API key missing');
+      }
+
+      const { systemInstructions, langInstruction } = getFarmingSystemInstructions(lang);
+
+      const url = 'https://api.perplexity.ai/chat/completions';
+      const body = {
+        model: 'sonar',
+        messages: [
+          { role: 'system', content: systemInstructions },
+          { role: 'user', content: question }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      };
+
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`Perplexity error: ${resp.status} ${text}`);
+      }
+
+      const data = await resp.json();
+      const out = data?.choices?.[0]?.message?.content || '';
+      return out.trim() || 'Mujhe sahi jawaab nahi mila. Kripya sawaal ko thoda aur saaf tarike se likhiye.';
+    }
+
+    // ============================================================
+    // UNIFIED LLM METHOD - ROUTES TO SELECTED VENDOR
+    // ============================================================
+    async function getLLMResponse(question, lang = 'en') {
+      const vendor = getLLMVendor();
+      console.log(`📡 Using ${vendor} vendor for LLM response...`);
+
+      try {
+        if (vendor === 'openai') {
+          return await askOpenAI(question, lang);
+        } else if (vendor === 'perplexity') {
+          return await askPerplexity(question, lang);
+        } else {
+          // Default to Gemini
+          return await askGemini(question, lang);
+        }
+      } catch (error) {
+        console.error(`LLM Error (${vendor}):`, error);
+        throw error;
+      }
+    }
+
     function setLoading(v){
       try{
         els.sendBtn.disabled = !!v;
@@ -936,15 +1180,17 @@
         const sel = document.getElementById('langSelect');
         const selLang = (sel && sel.value) || (localStorage.getItem('AQFAS_LANG') || 'en');
 
-        if(!isFarmingRelated(q)){
-          addMessage('bot', refusalMessage());
-          return;
-        }
-        const answer = await askGemini(q, selLang);
+        // if(!isFarmingRelated(q)){
+        //   addMessage('bot', refusalMessage());
+        //   return;
+        // }
+        // Use unified LLM method that routes to selected vendor
+        const answer = await getLLMResponse(q, selLang);
         addMessage('bot', answer);
       } catch(e){
         const msg = (e && e.message) ? e.message : String(e);
-        addMessage('bot', `Error: ${msg}\n\nTips:\n- API key sahi dalein (Google Gemini v1beta).\n- Agar CORS error aaye to backend proxy istemal karein.`);
+        const vendor = getLLMVendor();
+        addMessage('bot', `Error (${vendor}): ${msg}\n\nTips:\n- API key sahi dalein.\n- Agar CORS error aaye to backend proxy istemal karein.\n- Vendor ko switch karne ke liye: setLLMVendor('gemini') ya setLLMVendor('openai')`);
       } finally{
         setLoading(false);
       }
@@ -956,7 +1202,7 @@
 
     // Image upload in chat
     // Analyze crop image: converts file to base64, sends to Gemini, and displays result
-    async function analyzeCropImage(base64Image){
+    async function analyzeCropImage(base64Image, lang = 'en'){
       // Note: We include the base64 payload in the user prompt. For production,
       // use a backend to avoid exposing API keys and to handle large binary uploads.
       const b64 = (typeof base64Image === 'string' && base64Image.includes('base64,'))
@@ -965,10 +1211,8 @@
 
       const prompt = `Identify the crop and its condition from this image.\n\nInstructions:\n- Reply succinctly with \"Crop:\", \"Condition:\" (healthy/mild/moderate/severe), \"Likely issues:\", and short \"Recommendations:\" as bullet points.\n- If you cannot determine, reply honestly that you are unsure and list what extra info you'd need (location, variety, closeup).\n\nImage (base64): ${b64}`;
 
-      // Reuse existing askGemini helper so auth/payload are consistent
-      // default to English if lang not provided
-      const lang = arguments.length > 1 && arguments[1] ? arguments[1] : (localStorage.getItem('AQFAS_LANG') || 'en');
-      const resp = await askGemini(prompt, lang);
+      // Use unified getLLMResponse method instead of direct askGemini call
+      const resp = await getLLMResponse(prompt, lang);
       return resp;
     }
 
@@ -1184,8 +1428,33 @@
         showWeatherError('Geolocation not supported');
         return;
       }
+      
+      // Check if we have cached location (valid for 1 hour)
+      try {
+        const cached = localStorage.getItem('AQFAS_CACHED_LOC');
+        if (cached) {
+          const { lat, lon, ts } = JSON.parse(cached);
+          const age = Date.now() - ts;
+          if (age < 3600000) { // 1 hour
+            console.log('📍 Using cached location');
+            getWeatherForLocation(lat, lon)
+              .then(data => updateWeatherUI(data))
+              .catch(err => console.error('Weather error:', err));
+            return;
+          }
+        }
+      } catch (e) { console.warn('Cache error:', e); }
+      
+      // Request fresh location
       navigator.geolocation.getCurrentPosition(async (pos)=>{
-        const lat = pos.coords.latitude; const lon = pos.coords.longitude;
+        const lat = pos.coords.latitude; 
+        const lon = pos.coords.longitude;
+        
+        // Cache the location
+        try {
+          localStorage.setItem('AQFAS_CACHED_LOC', JSON.stringify({ lat, lon, ts: Date.now() }));
+        } catch (e) { console.warn('Could not cache location'); }
+        
         try{
           const data = await getWeatherForLocation(lat, lon);
           updateWeatherUI(data);
@@ -1207,14 +1476,20 @@
       const settingsBtn = document.getElementById('settingsBtn');
       const settingsModal = document.getElementById('settingsModal');
       const geminiKeyInput = document.getElementById('geminiKeyInput');
+      const openaiKeyInput = document.getElementById('openaiKeyInput');
+      const perplexityKeyInput = document.getElementById('perplexityKeyInput');
       const owmKeyInput = document.getElementById('owmKeyInput');
+      const llmVendorSelect = document.getElementById('llmVendorSelect');
       const saveKeysBtn = document.getElementById('saveKeysBtn');
       const clearKeysBtn = document.getElementById('clearKeysBtn');
 
       function openSettings(){
         // populate inputs from current storage/overrides
         geminiKeyInput.value = window.GEMINI_API_KEY || localStorage.getItem('GEMINI_API_KEY') || '';
+        openaiKeyInput.value = window.OPENAI_API_KEY || localStorage.getItem('OPENAI_API_KEY') || '';
+        perplexityKeyInput.value = window.PERPLEXITY_API_KEY || localStorage.getItem('PERPLEXITY_API_KEY') || '';
         owmKeyInput.value = window.OPENWEATHER_API_KEY || localStorage.getItem('AQFAS_OWM_KEY') || '';
+        llmVendorSelect.value = getLLMVendor();
         settingsModal.style.display = 'block';
       }
 
@@ -1222,24 +1497,51 @@
 
       settingsBtn?.addEventListener('click', ()=> openSettings());
 
+      // LLM Vendor selector change
+      llmVendorSelect?.addEventListener('change', (e)=>{
+        const selectedVendor = e.target.value;
+        setLLMVendor(selectedVendor);
+        alert(`✅ Switched to ${selectedVendor.toUpperCase()} LLM vendor`);
+      });
+
       // Save keys to localStorage (and set window vars for immediate use)
       saveKeysBtn?.addEventListener('click', ()=>{
         try{
           const g = (geminiKeyInput.value || '').trim();
+          const oa = (openaiKeyInput.value || '').trim();
+          const px = (perplexityKeyInput.value || '').trim();
           const o = (owmKeyInput.value || '').trim();
           if(g) localStorage.setItem('GEMINI_API_KEY', g); else localStorage.removeItem('GEMINI_API_KEY');
+          if(oa) localStorage.setItem('OPENAI_API_KEY', oa); else localStorage.removeItem('OPENAI_API_KEY');
+          if(px) localStorage.setItem('PERPLEXITY_API_KEY', px); else localStorage.removeItem('PERPLEXITY_API_KEY');
           if(o) localStorage.setItem('AQFAS_OWM_KEY', o); else localStorage.removeItem('AQFAS_OWM_KEY');
           // set runtime overrides too for immediate use in this session
           if(g) window.GEMINI_API_KEY = g; else delete window.GEMINI_API_KEY;
+          if(oa) window.OPENAI_API_KEY = oa; else delete window.OPENAI_API_KEY;
+          if(px) window.PERPLEXITY_API_KEY = px; else delete window.PERPLEXITY_API_KEY;
           if(o) window.OPENWEATHER_API_KEY = o; else delete window.OPENWEATHER_API_KEY;
           closeSettings();
-          alert('Keys saved locally. For production, store keys on a secure server.');
-        }catch(err){ console.error(err); alert('Failed to save keys: '+err); }
+          alert('✅ Keys saved locally. For production, store keys on a secure server.');
+        }catch(err){ console.error(err); alert('❌ Failed to save keys: '+err); }
       });
 
       clearKeysBtn?.addEventListener('click', ()=>{
         if(!confirm('Clear saved API keys from localStorage?')) return;
-        try{ localStorage.removeItem('GEMINI_API_KEY'); localStorage.removeItem('AQFAS_OWM_KEY'); delete window.GEMINI_API_KEY; delete window.OPENWEATHER_API_KEY; geminiKeyInput.value=''; owmKeyInput.value=''; alert('Keys cleared.'); }catch(e){ console.error(e); }
+        try{ 
+          localStorage.removeItem('GEMINI_API_KEY'); 
+          localStorage.removeItem('OPENAI_API_KEY'); 
+          localStorage.removeItem('PERPLEXITY_API_KEY'); 
+          localStorage.removeItem('AQFAS_OWM_KEY'); 
+          delete window.GEMINI_API_KEY; 
+          delete window.OPENAI_API_KEY; 
+          delete window.PERPLEXITY_API_KEY; 
+          delete window.OPENWEATHER_API_KEY; 
+          geminiKeyInput.value=''; 
+          openaiKeyInput.value=''; 
+          perplexityKeyInput.value=''; 
+          owmKeyInput.value=''; 
+          alert('✅ Keys cleared.'); 
+        }catch(e){ console.error(e); }
       });
 
       // Close settings when clicking outside
