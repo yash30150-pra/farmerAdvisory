@@ -1,25 +1,2539 @@
-<!DOCTYPE html>
+
+ <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>FARM-TASTIC SIX</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🌾 AI Farmer Advisory System</title>
+
+  <!-- Firebase SDK (latest version) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+
+  <!-- Your Firebase configuration and database functions -->
+  <script src="firebase-config.js"></script>
+  <script src="firebase-db.js"></script>
+  <script src="firebase-ui.js"></script>
+
+  <!-- Styles: glassmorphism + vibrant gradient theme (green/gold) -->
+  <style>
+    :root{
+      --bg-1: #163a3a; /* deep teal */
+      --bg-2: #276172; /* original */
+      --accent-1: #2ecc71; /* fresh green */
+      --accent-2: #ffd24d; /* gold */
+      --glass: rgba(255,255,255,0.06);
+      --glass-2: rgba(255,255,255,0.08);
+      --glass-3: rgba(255,255,255,0.12);
+      --muted: rgba(255,255,255,0.85);
+      --card-radius: 16px;
+      --max-width: 1200px;
+      --shadow-1: 0 6px 30px rgba(0,0,0,0.35);
+      --ease: cubic-bezier(.2,.9,.2,1);
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: var(--muted);
+      background: linear-gradient(135deg, var(--bg-1), var(--bg-2) 50%, #1e6c2d 75%);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      min-height:100vh;
+      padding-top:80px; /* for fixed nav */
+      line-height:1.45;
+      overflow-y:auto;
+    }
+
+    /* NAVBAR */
+    .navbar{
+      position:fixed; top:12px; left:12px; right:12px;
+      z-index:1200;
+      display:flex; justify-content:center;
+      pointer-events:auto;
+    }
+    .nav-inner{
+      width:100%; max-width:var(--max-width);
+      display:flex; align-items:center; gap:16px;
+      justify-content:space-between;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border-radius:16px; padding:12px 18px;
+      backdrop-filter: blur(10px) saturate(120%);
+      box-shadow: var(--shadow-1);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    
+    /* Add top padding to account for fixed navbar */
+    main{
+      padding-top:80px;
+    }
+    .logo{
+      display:flex; align-items:center; gap:12px;
+    }
+    .logo .mark{
+      width:44px; height:44px; border-radius:10px;
+      background: linear-gradient(45deg, rgba(255,210,77,0.13), rgba(46,204,113,0.08));
+      display:grid; place-items:center; font-weight:700;
+      color: #08120a; font-size:18px;
+      box-shadow: inset 0 -6px 18px rgba(255,255,255,0.02);
+      border:1px solid rgba(255,255,255,0.06);
+    }
+    .logo .title{
+      font-weight:700; font-size:1.15rem; color:#fff;
+      text-shadow: 0 4px 16px rgba(0,0,0,0.45);
+    }
+
+    /* nav links */
+    .nav-links{ display:flex; gap:10px; align-items:center; }
+    .nav-links a{
+      color: rgba(255,255,255,0.95);
+      text-decoration:none; padding:8px 12px; border-radius:999px;
+      font-weight:600; font-size:0.95rem;
+      transition: all 220ms var(--ease);
+      position:relative; overflow:hidden;
+    }
+    .nav-links a::after{
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(90deg, rgba(255,210,77,0.16), rgba(46,204,113,0.06));
+      transform: translateY(120%); transition: transform 280ms var(--ease);
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .nav-links a:hover{ transform:translateY(-4px); }
+    .nav-links a:hover::after{ transform: translateY(0); }
+
+    /* hamburger for mobile */
+    .hamburger{
+      display:none; background:transparent; border:none; color:var(--muted);
+      font-size:22px; padding:8px; cursor:pointer;
+      border-radius:10px; transition: transform 220ms ease;
+    }
+    .hamburger:hover{ transform: scale(1.1); }
+    .mobile-menu{ 
+      display:none; flex-direction:column; gap:8px; padding:0;
+      position:fixed; top:70px; left:6px; right:6px; background: linear-gradient(180deg, rgba(22,58,58,0.95), rgba(30,108,45,0.90));
+      border-radius:12px; z-index:1100; padding:12px; border:1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(10px);
+    }
+    .mobile-menu a{
+      display:block; padding:12px 14px; text-decoration:none; color:rgba(255,255,255,0.9);
+      font-weight:600; border-radius:8px; font-size:0.95rem;
+      transition: all 200ms ease; border-left:3px solid transparent;
+    }
+    .mobile-menu a:hover{
+      background:rgba(46,204,113,0.15); border-left-color:#2ecc71; transform:translateX(4px);
+    }
+
+    /* Container */
+    .container{
+      width:100%; max-width:var(--max-width); margin:0 auto; padding:20px;
+    }
+
+    /* HERO */
+    .hero{
+      display:grid; grid-template-columns: 1fr 420px; gap:28px; align-items:center;
+      margin-top:18px;
+    }
+    .hero-card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+      border-radius: var(--card-radius);
+      padding:36px; border:1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(8px) saturate(120%);
+      box-shadow: 0 10px 30px rgba(8,16,12,0.35);
+      transition: transform 300ms var(--ease), box-shadow 300ms var(--ease);
+    }
+    .hero-card:hover{ transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.45); }
+
+    .hero h1{
+      color: var(--accent-2); font-size:2.4rem; margin-bottom:8px;
+      text-shadow: 0 8px 26px rgba(0,0,0,0.45);
+      letter-spacing:0.2px;
+    }
+    .hero p{ color: rgba(255,255,255,0.92); font-size:1.05rem; margin-bottom:18px; }
+
+    .hero-cta{
+      display:flex; gap:12px; align-items:center;
+    }
+    .btn{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 14px; border-radius:12px; font-weight:700;
+      cursor:pointer; border:none; transition: transform 180ms var(--ease);
+    }
+    .btn-primary{
+      background: linear-gradient(90deg, var(--accent-1), #25b86b);
+      color:#07220a; box-shadow: 0 8px 24px rgba(46,204,113,0.12);
+    }
+    .btn-ghost{
+      background: transparent; color:var(--accent-2); border:1px solid rgba(255,210,77,0.18);
+      backdrop-filter: blur(6px);
+    }
+
+    /* small dashboard panel (right) */
+    .status-panel{
+      display:flex; flex-direction:column; gap:14px;
+    }
+    .stat{
+      background: var(--glass); border-radius:12px; padding:12px;
+      display:flex; justify-content:space-between; align-items:center;
+      border:1px solid rgba(255,255,255,0.05);
+    }
+    .stat h4{ color:var(--accent-2); font-size:0.95rem; margin-bottom:2px; }
+    .stat p{ font-weight:700; font-size:1.15rem; color:#fff; }
+
+    /* FEATURES grid */
+    .features{
+      margin-top:28px; display:grid;
+      grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+      gap:18px;
+    }
+    .feature-card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border-radius:14px; padding:18px; border:1px solid rgba(255,255,255,0.06);
+      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+      backdrop-filter: blur(6px) saturate(120%);
+      position:relative; overflow:hidden;
+      min-height:120px;
+    }
+    .feature-card:hover{ transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.38); }
+    .feature-card h3{ color:var(--accent-2); margin-bottom:8px; font-size:1.05rem; }
+    .feature-card p{ color: rgba(255,255,255,0.9); font-size:0.95rem; }
+
+    /* SECTIONS */
+    .section{
+      margin-top:28px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      padding:18px; border-radius:14px; border:1px solid rgba(255,255,255,0.05);
+      backdrop-filter: blur(6px);
+    }
+    .section h2{ color:var(--accent-2); margin-bottom:12px; font-size:1.15rem; }
+
+    /* Weather cards */
+    .weather-widget{ display:grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+    .weather-card{
+      padding:12px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border:1px solid rgba(255,255,255,0.04);
+      text-align:center;
+    }
+    .weather-card h4{ color:#eaf7ea; margin-bottom:6px; font-weight:700;}
+    .temp{ font-size:1.6rem; color:var(--accent-2); font-weight:800; margin-bottom:6px; }
+
+    /* Tables */
+    .price-table{ overflow:auto; border-radius:10px; }
+    table{ width:100%; border-collapse:collapse; min-width:620px; }
+    th,td{ padding:12px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.04); }
+    th{ background: rgba(255,255,255,0.03); color:var(--accent-2); font-weight:800; }
+
+    /* Scheme cards */
+    .scheme-card{ padding:12px; border-radius:12px; background:var(--glass-2); border:1px solid rgba(255,255,255,0.04); }
+    .scheme-card h4{ color:var(--accent-2); margin-bottom:6px; }
+
+    /* FILE INPUT styling for image upload in disease section */
+    .file-input {
+      display:flex; gap:8px; align-items:center; justify-content:flex-start; margin-top:10px;
+    }
+    .file-input label{
+      background: linear-gradient(90deg, rgba(255,210,77,0.12), rgba(46,204,113,0.08));
+      padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:700;
+      border:1px solid rgba(255,255,255,0.05);
+    }
+    .file-input span{ font-size:0.9rem; color:rgba(255,255,255,0.85) }
+
+    /* support badge (restored to left-side position) */
+    .support-badge{
+      position:fixed; right:20px; bottom:100px; transform:none;
+      background: linear-gradient(45deg,#ff7a7a,#ffb36b);
+      color:#07120a; padding:10px 14px; border-radius:12px; font-weight:800;
+      box-shadow: 0 10px 34px rgba(0,0,0,0.36);
+      transition: transform 220ms var(--ease), box-shadow 220ms var(--ease), opacity 180ms var(--ease);
+      z-index:1400; cursor:pointer; border:1px solid rgba(255,255,255,0.06);
+      white-space:nowrap; font-size:0.95rem;
+    }
+    .support-badge:hover{ transform: translateY(-4px) scale(1.02); box-shadow: 0 14px 44px rgba(0,0,0,0.5); }
+
+    /* small modal (aligned above the bottom-right badge) */
+    .contact-modal{
+      position:fixed; left:20px; bottom:150px; transform:none;
+      background: #ffffff; color: #072234;
+      padding:14px 16px; border-radius:10px; box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      border:1px solid rgba(0,0,0,0.08); display:none; z-index:1500;
+      width:280px;
+    }
+    .contact-modal h4{ font-size:0.95rem; color:var(--accent-2); margin-bottom:6px; }
+    .contact-modal p{ font-size:0.9rem; color:inherit; margin:4px 0 }
+
+    /* Chatbot floating button + panel */
+    .chatbot-container{
+      position:fixed; right:20px; bottom:20px; z-index:1300; display:flex; gap:10px; align-items:flex-end;
+    }
+    .chatbot-toggle{
+      width:64px; height:64px; border-radius:999px; background: linear-gradient(45deg,#2E8B57,#32CD32);
+      color:#fff; border:none; font-size:22px; box-shadow:0 8px 30px rgba(0,0,0,0.36); cursor:pointer;
+      display:grid; place-items:center;
+      transition: transform 220ms var(--ease), box-shadow 220ms var(--ease);
+    }
+    .chatbot-toggle:hover{ transform:scale(1.05); box-shadow:0 12px 40px rgba(0,0,0,0.45); }
+
+    .chat-container{
+      width:420px; max-width:92vw; height:560px; background: linear-gradient(180deg, rgba(8,24,16,0.92), rgba(6,32,18,0.96));
+      border-radius:14px; overflow:hidden; display:flex; flex-direction:column;
+      border:1px solid rgba(255,255,255,0.04); box-shadow: 0 18px 50px rgba(0,0,0,0.55); transform-origin:right bottom;
+      transition: transform 240ms var(--ease), opacity 240ms var(--ease);
+      opacity:0; pointer-events:none; transform: translateY(12px) scale(0.98);
+      color: var(--muted);
+    }
+  .chat-container.open{ opacity:1; pointer-events:auto; transform: translateY(0) scale(1); animation: chatOpen 260ms var(--ease) both; }
+
+  .chat-header{ background: linear-gradient(90deg,#13803d,#25b86b); padding:12px 14px; color:white; font-weight:800; }
+  .chat-messages{ padding:14px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; flex:1; background: transparent; }
+    .message{ max-width:76%; padding:10px 12px; border-radius:12px; font-size:0.95rem; transition: box-shadow 200ms var(--ease), transform 200ms var(--ease); }
+    .user{ align-self:flex-end; background: linear-gradient(90deg,#bbf7d0,#97e7b3); color:#05210a; box-shadow: 0 6px 18px rgba(2,36,12,0.12); }
+    .bot{ align-self:flex-start; background: linear-gradient(90deg,#eaf7ef,#f5fbff); color:#072234; box-shadow: 0 8px 24px rgba(2,10,8,0.18); border: 1px solid rgba(255,255,255,0.06); }
+
+    /* subtle pop for newly added messages */
+    @keyframes messagePop {
+      from { transform: translateY(6px) scale(0.995); opacity:0 }
+      to { transform: translateY(0) scale(1); opacity:1 }
+    }
+    .chat-input{ padding:10px; display:flex; gap:8px; align-items:center; border-top:1px solid rgba(0,0,0,0.04); background:transparent; }
+    .chat-input input[type="text"]{ flex:1; padding:9px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.06); background:rgba(0,0,0,0.03); color:var(--muted); }
+    .chat-input .icon-btn{ background:transparent; border:none; font-size:18px; cursor:pointer; color:var(--accent-1); }
+    .chat-input button.send-btn{ background: linear-gradient(90deg,#46e507,#25b86b); padding:9px 12px; border-radius:10px; border:none; color:#04130a; font-weight:800; cursor:pointer; }
+
+    /* small helpers */
+    .muted{ color: rgba(255,255,255,0.78); }
+    .small{ font-size:0.9rem }
+
+    /* responsive */
+    @media (max-width: 980px){
+      .hero{ grid-template-columns: 1fr; }
+      .nav-links{ display:none; }
+      .hamburger{ display:inline-flex; }
+      .nav-inner{ align-items:center; gap:10px; }
+      .mobile-menu{ display:flex; }
+      .chat-container{ width:92vw; right:12px; }
+      .hero h1{ font-size:1.8rem }
+      main{ padding-top:74px; }
+      .navbar{ top:8px; left:8px; right:8px; }
+      .nav-inner{ padding:10px 14px; }
+      .mobile-menu{ top:68px; }
+    }
+
+    @media (max-width:520px){
+      .feature-card{ min-height:110px; padding:12px; }
+      .status-panel{ gap:10px }
+      .chat-container{ height:520px }
+      .logo .title{ font-size:1rem }
+      main{ padding-top:72px; }
+      .navbar{ top:6px; left:6px; right:6px; }
+      .nav-inner{ padding:8px 12px; gap:8px; }
+      .logo{ gap:8px; }
+      .logo .mark{ width:36px; height:36px; font-size:14px; }
+      #langSelect{ font-size:0.8rem; padding:6px; }
+      .hamburger{ font-size:1.2rem; }
+      .mobile-menu{ top:62px; gap:6px; padding:10px; }
+      .mobile-menu a{ padding:10px 12px; font-size:0.9rem; }
+    }
+
+    /* subtle entrance animations for content */
+    .reveal{ transform: translateY(10px); opacity:0; transition: all 520ms var(--ease); }
+    .reveal.visible{ transform:none; opacity:1; }
+
+    /* chat open animation */
+    @keyframes chatOpen{
+      from { transform: translateY(18px) scale(0.98); opacity:0 }
+      to { transform: translateY(0) scale(1); opacity:1 }
+    }
+
+    /* focus states for accessibility */
+    a:focus, button:focus, input:focus, textarea:focus{ outline: 3px solid rgba(255,210,77,0.18); outline-offset:3px; }
+
+    /* CROPS GRID - Recommended crops section */
+    .crops-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .crop-card {
+      background: linear-gradient(135deg, rgba(255,210,77,0.08), rgba(46,204,113,0.06));
+      border: 2px solid rgba(255,210,77,0.2);
+      border-radius: 14px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 260ms var(--ease);
+      position: relative;
+      overflow: hidden;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .crop-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(46,204,113,0.1), transparent);
+      transform: translateX(-100%);
+      transition: transform 300ms var(--ease);
+    }
+
+    .crop-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(255,210,77,0.4);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+      background: linear-gradient(135deg, rgba(255,210,77,0.12), rgba(46,204,113,0.1));
+    }
+
+    .crop-card:hover::before {
+      transform: translateX(0);
+    }
+
+    .crop-emoji {
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .crop-name {
+      color: var(--accent-2);
+      font-weight: 800;
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+
+    .crop-season {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 8px;
+    }
+
+    .crop-status {
+      font-size: 0.9rem;
+      color: rgba(46,204,113,0.9);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Crop detail modal */
+    .crop-detail-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: linear-gradient(180deg, #1a4d4d, #1e6c2d);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 450px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 280ms var(--ease);
+    }
+
+    .crop-detail-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .crop-detail-modal h3 {
+      color: var(--accent-2);
+      font-size: 1.3rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .crop-detail-modal .detail-section {
+      margin-bottom: 16px;
+    }
+
+    .crop-detail-modal .detail-section h4 {
+      color: rgba(255,210,77,0.9);
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .crop-detail-modal .detail-section p {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.5;
+    }
+
+    .crop-detail-modal .detail-section ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .crop-detail-modal .detail-section li {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.85);
+      padding: 4px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .crop-detail-modal .detail-section li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--accent-1);
+      font-weight: 700;
+    }
+
+    .crop-detail-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 200ms var(--ease);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .crop-detail-close:hover {
+      background: rgba(255,255,255,0.2);
+      transform: rotate(90deg);
+    }
+
+    .crop-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 280ms var(--ease);
+    }
+
+    .crop-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
 </head>
 <body>
-  <div class="chat-container">
-    <div class="chat-header">🌱AQ-FAS</div>
-    <div class="chat-messages" id="chatMessages">
-      <div class="message bot">👋 Namaste! How can I help you with your crops today?</div>
+
+  <!-- NAV -->
+  <nav class="navbar" aria-label="Main navigation">
+    <div class="nav-inner" role="navigation">
+      <div class="logo" aria-hidden="false">
+        <div class="mark" aria-hidden="true">AQ</div>
+        <div class="title">AQ-FAS</div>
+      </div>
+
+      <div class="nav-links" id="desktopLinks" role="menubar">
+        <a href="#home" data-i18n="nav_home">Home</a>
+        <a href="#weather" data-i18n="nav_weather">Weather</a>
+        <a href="#schemes" data-i18n="nav_schemes">Gov Schemes</a>
+        <a href="#crops" data-i18n="nav_crops">🌾 Crops</a>
+        <a href="#market" data-i18n="nav_market">Market</a>
+        <a href="#diseases" data-i18n="nav_diseases">Pest & Disease</a>
+        <a href="#support" id="supportLink" data-i18n="nav_support">24/7 Support</a>
+      </div>
+
+      <!-- Language selector (restored to simple select to preserve original behavior) -->
+      <select id="langSelect" aria-label="Language selector" style="padding:8px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted);">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी</option>
+        <option value="ml">മലയാളം</option>
+      </select>
+
+      <!-- Settings button -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="settingsBtn" class="btn btn-ghost" aria-label="Open settings">⚙️ Settings</button>
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">☰</button>
     </div>
-    <div class="chat-input">
-      <input type="file" id="imageUpload" accept="image/*" hidden>
-      <button class="icon-btn" title="Upload Image" onclick="document.getElementById('imageUpload').click()">📷</button>
-      <button class="icon-btn" title="Voice Input" onclick="startVoice()">🎤</button>
-      <input type="text" id="userInput" placeholder="अपनी समस्या हमें बताएं.......">
-      <button onclick="sendMessage()">Send</button>
+
+    <!-- Mobile collapsed menu -->
+    <div class="mobile-menu" id="mobileMenu" hidden>
+      <a href="#home" data-i18n="nav_home">Home</a>
+      <a href="#weather" data-i18n="nav_weather">Weather</a>
+      <a href="#schemes" data-i18n="nav_schemes">Gov Schemes</a>
+      <a href="#crops" data-i18n="nav_crops">🌾 Crops</a>
+      <a href="#market" data-i18n="nav_market">Market</a>
+      <a href="#diseases" data-i18n="nav_diseases">Pest & Disease</a>
+      <a href="#support" id="mobileSupport" data-i18n="nav_support">24/7 Support</a>
+    </div>
+  </nav>
+
+  <!-- Support badge + contact modal -->
+  <div class="support-badge" id="supportBadge" role="button" tabindex="0" aria-label="Open support contact"><span data-i18n="support_badge">24/7 SUPPORT</span></div>
+  <div class="contact-modal" id="contactModal" role="dialog" aria-modal="false" aria-labelledby="supportTitle">
+    <h4 id="supportTitle"><span data-i18n="support_title">24/7 Support</span></h4>
+    <p class="small" data-i18n-html="support_phone">📞 Helpline: <strong>638975****</strong></p>
+    <p class="small" data-i18n-html="support_chat">💬 Chat with experts anytime</p>
+    <p class="small" data-i18n-html="support_email">📧 Email: <strong>AQ-FAS06@Gmail.com</strong></p>
+  </div>
+
+  <!-- Settings modal: manage API keys (Gemini & OpenWeather) -->
+  <div class="contact-modal" id="settingsModal" role="dialog" aria-modal="false" aria-labelledby="settingsTitle" style="display:none; width:340px;">
+    <h4 id="settingsTitle">Settings</h4>
+    <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+      
+      <!-- LLM Vendor Selector -->
+      <label style="font-weight:700; font-size:0.95rem">Demo Location (Testing)</label>
+      <select id="demoLocationSelect" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);">
+        <option value="current">📍 Current Location (Auto-Detect)</option>
+        <option value="north-delhi">🟡 North India - Delhi (28.6°N, 77.2°E)</option>
+        <option value="north-punjab">🟡 North India - Punjab (31.5°N, 74.4°E)</option>
+        <option value="north-haryana">🟡 North India - Haryana (29.1°N, 77.9°E)</option>
+        <option value="central-mp">🟠 Central India - Madhya Pradesh (22.9°N, 78.7°E)</option>
+        <option value="central-maharashtra">🟠 Central India - Maharashtra (19.9°N, 75.9°E)</option>
+        <option value="south-tamil">🟢 South India - Tamil Nadu (11.1°N, 79.8°E)</option>
+        <option value="south-karnataka">🟢 South India - Karnataka (15.3°N, 75.7°E)</option>
+        <option value="south-kerala">🟢 South India - Kerala (10.9°N, 76.3°E)</option>
+        <option value="east-bihar">🔵 East India - Bihar (25.6°N, 85.2°E)</option>
+        <option value="east-bengal">🔵 East India - West Bengal (23.7°N, 88.4°E)</option>
+        <option value="east-odisha">🔵 East India - Odisha (20.9°N, 85.1°E)</option>
+      </select>
+      
+      <label style="font-weight:700; font-size:0.95rem">LLM Vendor</label>
+      <select id="llmVendorSelect" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);">
+        <option value="gemini">🔵 Google Gemini (Fast)</option>
+        <option value="openai">🟠 OpenAI (GPT-3.5)</option>
+        <option value="perplexity">🔷 Perplexity (Research)</option>
+      </select>
+      
+      <label style="font-weight:700; font-size:0.95rem">Gemini API Key</label>
+      <input id="geminiKeyInput" type="text" placeholder="Paste Gemini API key here" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);" />
+      <label style="font-weight:700; font-size:0.95rem">OpenAI API Key</label>
+      <input id="openaiKeyInput" type="text" placeholder="Paste OpenAI API key here" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);" />
+      <label style="font-weight:700; font-size:0.95rem">Perplexity API Key</label>
+      <input id="perplexityKeyInput" type="text" placeholder="Paste Perplexity API key here" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);" />
+      <label style="font-weight:700; font-size:0.95rem">OpenWeather API Key</label>
+      <input id="owmKeyInput" type="text" placeholder="Paste OpenWeatherMap API key here" style="padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08);" />
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:6px;">
+        <button id="saveKeysBtn" class="btn btn-primary">Save</button>
+        <button id="clearKeysBtn" class="btn btn-ghost">Clear</button>
+      </div>
+      <div style="font-size:0.85rem; color:#444; margin-top:6px;">Keys are stored in browser localStorage for convenience. For production, keep keys on a server.</div>
     </div>
   </div>
 
-  <script src="style.js"></script>
+  <!-- MAIN CONTENT -->
+  <main class="container" id="home">
+    <section class="hero reveal" aria-labelledby="heroTitle">
+      <div class="hero-card">
+        <h1 id="heroTitle" data-i18n="hero_title">🌾 AI-Based Farmer Advisory System</h1>
+        <p data-i18n="hero_sub">Empowering farmers with AI-driven insights, weather forecasts, market prices and government schemes — all in one place.</p>
+
+        <div class="hero-cta">
+          <button class="btn btn-primary" onclick="openChat()"><span id="startChatText" data-i18n="start_chat">💬 Start Chat</span></button>
+          <button class="btn btn-ghost" onclick="downloadBrochure()"><span data-i18n="download_brochure">📄 Download Brochure</span></button>
+        </div>
+
+        <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap;">
+          <div style="background:rgba(255,255,255,0.02); padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);">
+            <div style="font-size:0.85rem" class="muted" data-i18n="available_languages_label">Available Languages</div>
+            <div style="font-weight:800; margin-top:6px" data-i18n="available_languages_value">Hindi • English • Regional</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.02); padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);">
+            <div class="muted" style="font-size:0.85rem" data-i18n="offline_mode_label">Offline Mode</div>
+            <div style="font-weight:800; margin-top:6px" data-i18n="offline_mode_value">Yes (caching & local advisory)</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="status-panel">
+        <div class="stat reveal">
+          <div>
+            <h4 data-i18n="stat_active_farmers">Active Farmers</h4>
+            <p>12,430</p>
+          </div>
+        </div>
+        <div class="stat reveal">
+          <div>
+            <h4 data-i18n="stat_avg_response">Avg Response Time</h4>
+            <p>~ 1 min</p>
+          </div>
+        </div>
+        <div class="stat reveal">
+          <div>
+            <h4 data-i18n="stat_crop_models">Crop Models</h4>
+            <p>45+</p>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features" aria-label="Features">
+      <div class="feature-card reveal">
+        <h3 data-i18n="feat_chatbot_title">🤖 AI Chatbot Assistant</h3>
+        <p data-i18n="feat_chatbot_desc">Instant, context-aware answers based on your crop, location and past activities. Voice & image support included.</p>
+      </div>
+      <div class="feature-card reveal">
+        <h3 data-i18n="feat_weather_title">🌤️ Weather Detection</h3>
+        <p data-i18n="feat_weather_desc">Real-time weather and alerts to plan sprays, irrigation and harvest windows — minimize losses from extreme weather.</p>
+      </div>
+      <div class="feature-card reveal">
+        <h3 data-i18n="feat_schemes_title">🏛️ Government Schemes</h3>
+        <p data-i18n="feat_schemes_desc">Curated list of schemes you qualify for, with step-by-step application help and document checklists.</p>
+      </div>
+      <div class="feature-card reveal">
+        <h3 data-i18n="feat_pest_title">🦠 Pest & Disease Detection</h3>
+        <p data-i18n="feat_pest_desc">Upload images to receive AI diagnosis, recommended treatment and prevention tips tailored to your region.</p>
+      </div>
+      <div class="feature-card reveal">
+        <h3 data-i18n="feat_market_title">📈 Market Prices</h3>
+        <p data-i18n="feat_market_desc">Live mandi rates across regions so you can pick the right time and place to sell for the best price.</p>
+      </div>
+      <div class="feature-card reveal">
+        <h3 data-i18n="feat_support_title">📞 24/7 Support</h3>
+        <p data-i18n="feat_support_desc">Round-the-clock access to verified experts — phone, chat and email support channels available.</p>
+      </div>
+    </section>
+
+    <!-- WEATHER -->
+    <section class="section reveal" id="weather" aria-labelledby="weatherTitle">
+    <h2 id="weatherTitle" data-i18n="weather_title">🌤️ Weather Forecast</h2>
+      <div class="weather-widget">
+        <div class="weather-card">
+          <h4>Today</h4>
+          <div class="temp">28°C</div>
+          <div class="small">Partly Cloudy</div>
+          <div class="small muted">Humidity: 65%</div>
+        </div>
+        <div class="weather-card">
+          <h4>Tomorrow</h4>
+          <div class="temp">31°C</div>
+          <div class="small">Sunny</div>
+          <div class="small muted">Humidity: 55%</div>
+        </div>
+        <div class="weather-card">
+          <h4>Day 3</h4>
+          <div class="temp">26°C</div>
+          <div class="small">Light Rain</div>
+          <div class="small muted">Humidity: 78%</div>
+        </div>
+        <div class="weather-card">
+          <h4>Day 4</h4>
+          <div class="temp">29°C</div>
+          <div class="small">Cloudy</div>
+          <div class="small muted">Humidity: 62%</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCHEMES -->
+    <section class="section reveal" id="schemes" aria-labelledby="schemesTitle">
+    <h2 id="schemesTitle" data-i18n="schemes_title">🏛️ Government Schemes for Farmers</h2>
+      <div style="display:grid; gap:12px;">
+        <div class="scheme-card">
+          <h4>PM-KISAN Scheme</h4>
+          <p>Financial support of ₹6000 per year to eligible farmer families — direct benefit transfer to bank accounts.</p>
+        </div>
+        <div class="scheme-card">
+          <h4>Pradhan Mantri Fasal Bima Yojana</h4>
+          <p>Crop insurance to protect farmers against natural calamities — simplified claim process and support.</p>
+        </div>
+        <div class="scheme-card">
+          <h4>Soil Health Card Scheme</h4>
+          <p>Free soil testing and health cards to improve soil fertility and yields through informed nutrient management.</p>
+        </div>
+        <div class="scheme-card">
+          <h4>Kisan Credit Card</h4>
+          <p>Access to institutional credit with subsidized interest rates for crop production and allied activities.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARKET PRICES -->
+    <section class="section reveal" id="market" aria-labelledby="marketTitle">
+    <h2 id="marketTitle" data-i18n="market_title">📈 Market Prices Today</h2>
+      <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center;">
+        <p style="margin:0; font-size:0.9rem; color:var(--muted);">Prices updated every 2 hours • Last updated: <span id="priceUpdateTime">just now</span></p>
+        <button id="refreshPricesBtn" class="btn btn-ghost" style="font-size:0.85rem; padding:6px 10px;" title="Refresh market prices">🔄 Refresh</button>
+      </div>
+      <div class="price-table">
+        <table aria-describedby="marketTitle">
+          <thead>
+            <tr>
+              <th>Crop</th>
+              <th>Market & State</th>
+              <th>Price (₹/Quintal)</th>
+              <th>Trend</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4" style="text-align:center; color:var(--muted);">Loading prices...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DISEASES -->
+    <section class="section reveal" id="diseases" aria-labelledby="diseasesTitle">
+    <h2 id="diseasesTitle" data-i18n="diseases_title">🦠 Pest & Disease Management</h2>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+        <div class="feature-card">
+            <h3 data-i18n="upload_image_title">📱 Upload Crop Image</h3>
+          <p>Take a photo of affected crops and receive AI diagnosis. Supports offline image caching for slow networks.</p>
+
+          <div class="file-input" aria-hidden="false">
+            <label for="cropImage" role="button" data-i18n="upload_label">📷 Upload Image</label>
+            <input id="cropImage" type="file" accept="image/*" style="display:none" aria-label="Upload crop image">
+            <span id="fileName" class="muted small" data-i18n="no_file">No file chosen</span>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <h3>🔍 Common Issues & Prevention</h3>
+          <p><strong>Aphids:</strong> Use neem oil spray<br>
+          <strong>Fungal infections:</strong> Apply copper fungicide<br>
+          <strong>Leaf blight:</strong> Remove affected leaves and maintain airflow</p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div class="feature-card">
+          <h3>💡 Prevention Tips</h3>
+          <p>• Crop rotation every season • Maintain spacing • Use resistant varieties • Regular field monitoring</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECOMMENDED CROPS (based on location) -->
+    <section class="section reveal" id="crops" aria-labelledby="cropsTitle">
+      <h2 id="cropsTitle">🌾 Recommended Crops for Your Region</h2>
+      <p style="font-size:0.95rem; color:rgba(255,255,255,0.85); margin-bottom:16px;">Based on your location, these crops grow well in your area. Click any crop to learn more.</p>
+      
+      <div id="cropsContainer" class="crops-grid">
+        <!-- Crops will be populated here by JavaScript based on lat/long -->
+        <div style="text-align:center; color:rgba(255,255,255,0.7); padding:20px;">
+          🔍 Detecting your location...
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- CHATBOT -->
+  <div class="chatbot-container" aria-hidden="false">
+    <button class="chatbot-toggle" id="chatToggle" aria-label="Open chat">💬</button>
+
+    <div class="chat-container" id="chatbot" role="dialog" aria-modal="false" aria-label="AQ-FAS chat">
+  <div class="chat-header">AQ-FAS</div>
+      <div class="chat-messages" id="chatMessages" aria-live="polite">
+        <div class="message bot">🙏 Namaste! आज मैं आपकी फसलों में किस प्रकार मदद कर सकता हूँ?</div>
+      </div>
+
+      <div class="chat-input">
+        <input type="file" id="imageUpload" accept="image/*" style="display:none" />
+        <button class="icon-btn" title="Upload Image" onclick="document.getElementById('imageUpload').click()">📷</button>
+        <button class="icon-btn" title="Voice Input" id="voiceBtn">🎤</button>
+        <input type="text" id="userInput" placeholder="अपनी समस्या हमें बताएं......." aria-label="Type your message" data-i18n-placeholder="chat_placeholder" />
+        <button class="send-btn" id="sendBtn" data-i18n="send_button">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer (small) -->
+  <footer style="max-width:var(--max-width); margin:28px auto 56px; padding:0 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; color:rgba(255,255,255,0.75);">
+      <div class="small">© AQ-FAS 2025 • Built for farmers</div>
+      <div class="small muted">Privacy • Terms • Help</div>
+    </div>
+  </footer>
+
+  <!-- JS: small enhancements + accessibility + interactions -->
+  <script>
+    // Translations object for multilingual support
+    const translations = {
+      en: {
+        nav_home: 'Home', nav_weather: 'Weather', nav_schemes: 'Gov Schemes', nav_crops: '🌾 Crops', nav_market: 'Market', nav_diseases: 'Pest & Disease', nav_support: '24/7 Support',
+        support_badge: '24/7 SUPPORT', support_title: '24/7 Support', support_phone: '📞 Helpline: <strong>638975****</strong>', support_chat: '💬 Chat with experts anytime', support_email: '📧 Email: <strong>AQ-FAS06@Gmail.com</strong>',
+        hero_title: '🌾 AI-Based Farmer Advisory System', hero_sub: 'Empowering farmers with AI-driven insights, weather forecasts, market prices and government schemes — all in one place.',
+        start_chat: '💬 Start Chat', download_brochure: '📄 Download Brochure',
+        available_languages_label: 'Available Languages', available_languages_value: 'Hindi • English • Regional', offline_mode_label: 'Offline Mode', offline_mode_value: 'Yes (caching & local advisory)',
+        stat_active_farmers: 'Active Farmers', stat_avg_response: 'Avg Response Time', stat_crop_models: 'Crop Models',
+        feat_chatbot_title: '🤖 AI Chatbot Assistant', feat_chatbot_desc: 'Instant, context-aware answers based on your crop, location and past activities. Voice & image support included.',
+        feat_weather_title: '🌤️ Weather Detection', feat_weather_desc: 'Real-time weather and alerts to plan sprays, irrigation and harvest windows — minimize losses from extreme weather.',
+        feat_schemes_title: '🏛️ Government Schemes', feat_schemes_desc: 'Curated list of schemes you qualify for, with step-by-step application help and document checklists.',
+        feat_pest_title: '🦠 Pest & Disease Detection', feat_pest_desc: 'Upload images to receive AI diagnosis, recommended treatment and prevention tips tailored to your region.',
+        feat_market_title: '📈 Market Prices', feat_market_desc: 'Live mandi rates across regions so you can pick the right time and place to sell for the best price.', feat_support_title: '📞 24/7 Support', feat_support_desc: 'Round-the-clock access to verified experts — phone, chat and email support channels available.',
+        weather_title: '🌤️ Weather Forecast', schemes_title: '🏛️ Government Schemes for Farmers', market_title: '📈 Market Prices Today',
+        diseases_title: '🦠 Pest & Disease Management', upload_image_title: '📱 Upload Crop Image', upload_label: '📷 Upload Image', no_file: 'No file chosen',
+        chat_placeholder: 'Type your question here...', send_button: 'Send'
+      },
+      hi: {
+        nav_home: 'होम', nav_weather: 'मौसम', nav_schemes: 'सरकारी योजनाएँ', nav_crops: '🌾 फसलें', nav_market: 'बाजार', nav_diseases: 'कीट व रोग', nav_support: '24/7 सहायता',
+        support_badge: '24/7 सहायता', support_title: '24/7 सहायता', support_phone: '📞 हेल्पलाइन: <strong>638975****</strong>', support_chat: '💬 विशेषज्ञों से कभी भी चैट करें', support_email: '📧 ईमेल: <strong>AQ-FAS06@Gmail.com</strong>',
+        hero_title: '🌾 एआई-आधारित किसान सहायक', hero_sub: 'किसानों को AI आधारित सुझाव, मौसम पूर्वानुमान, मंडी भाव और सरकारी योजनाएँ एक ही जगह पर उपलब्ध कराएं।',
+        start_chat: '💬 चैट शुरू करें', download_brochure: '📄 ब्रोशर डाउनलोड करें',
+        available_languages_label: 'उपलब्ध भाषाएँ', available_languages_value: 'हिन्दी • अंग्रेज़ी • क्षेत्रीय', offline_mode_label: 'ऑफ़लाइन मोड', offline_mode_value: 'हां (कॅशिंग और स्थानीय सलाह)',
+        stat_active_farmers: 'सक्रिय किसान', stat_avg_response: 'औसत प्रतिक्रिया समय', stat_crop_models: 'फसल मॉडल',
+        feat_chatbot_title: '🤖 एआई चैटबॉट सहायक', feat_chatbot_desc: 'आपकी फसल, स्थान और पिछले डेटा के आधार पर त्वरित उत्तर। आवाज़ और इमेज सपोर्ट।',
+        feat_weather_title: '🌤️ मौसम की जानकारी', feat_weather_desc: 'स्प्रे, सिंचाई और कटाई योजनाओं के लिए रीयल-टाइम अलर्ट।',
+        feat_schemes_title: '🏛️ सरकारी योजनाएँ', feat_schemes_desc: 'आपके लिए उपयुक्त योजनाएँ और आवेदन सहायता।',
+        feat_pest_title: '🦠 कीट व रोग पहचान', feat_pest_desc: 'इमेज अपलोड करके AI निदान और उपचार सुझाव पाएं।',
+        feat_market_title: '📈 मंडी मूल्य', feat_market_desc: 'क्षेत्रीय मंडी दरें ताकि आप सबसे अच्छा समय चुन सकें।', feat_support_title: '📞 24/7 सहायता', feat_support_desc: 'विशेषज्ञ सहायता — फोन, चैट व ईमेल',
+        weather_title: '🌤️ मौसम पूर्वानुमान', schemes_title: '🏛️ किसानों के लिए सरकारी योजनाएँ', market_title: '📈 आज के मंडी भाव',
+        diseases_title: '🦠 कीट और रोग प्रबंधन', upload_image_title: '📱 फसल छवि अपलोड करें', upload_label: '📷 इमेज अपलोड करें', no_file: 'कोई फाइल नहीं चुनी गई',
+        chat_placeholder: 'अपना प्रश्न यहाँ टाइप करें...', send_button: 'भेजें'
+      },
+      ml: {
+        nav_home: 'ഹോം', nav_weather: 'വായു നില', nav_schemes: 'സർക്കാർ പദ്ധതികൾ', nav_market: 'ബസാർ', nav_diseases: 'പുറപ്പാട് & രോഗം', nav_support: '24/7 പിന്തുണ',
+        support_badge: '24/7 പിന്തുണ', support_title: '24/7 പിന്തുണ', support_phone: '📞 ഹെൽപ് ലൈൻ: <strong>638975****</strong>', support_chat: '💬 വിദഗ്ധരുമായി ഏഴും പത്തു چیätചാറ്റ് ചെയ്യാം', support_email: '📧 ഇമെയിൽ: <strong>AQ-FAS06@Gmail.com</strong>',
+        hero_title: '🌾 AI അടിസ്ഥാനത്തിലുള്ള കർഷക ഉപദേശം', hero_sub: 'AI പിന്തുണയുള്ള ഉപദേശങ്ങൾ, കാലാവസ്ഥ മുന്നറിയിപ്പ്, വിപണി നിരക്കുകൾ, സർക്കാർ പദ്ധതികൾ — എല്ലാം ഒരിടത്ത്.',
+        start_chat: '💬 ചാറ്റ് ആരംഭിക്കുക', download_brochure: '📄 ബ്രായ്ചർ ഡൗൺലോഡ് ചെയ്യുക',
+        available_languages_label: 'ലഭ്യമായ ഭാഷകൾ', available_languages_value: 'ഹിന്ദി • ഇംഗ്ലീഷ് • പ്രദേശിക', offline_mode_label: 'ഓഫ്‌ലൈൻ മോഡ്', offline_mode_value: 'അതെ (കാഷിംഗ് & ലോക്കൽ ഉപദേശം)',
+        stat_active_farmers: 'സജീവ കർഷകർ', stat_avg_response: 'ശരാശരി പ്രതികരണ സമയം', stat_crop_models: 'ഫല മോഡലുകൾ',
+        feat_chatbot_title: '🤖 AI ചാറ്റ്ബോട്ട് സഹായി', feat_chatbot_desc: 'ഫല, സ്ഥലം, മുൻപരിചയം എന്നിവ അടിസ്ഥാനമാക്കി_Context-aware_ ഉത്തരം. ശബ്‌ദവും ചിത്രം പിന്തുണയും.',
+        feat_weather_title: '🌤️ കാലാവസ്ഥ വിവരം', feat_weather_desc: 'സ്പ്രേ, സിഞ്ചൈ, കൊയ്ത്ത് സമയക്രമം എന്നിവയ്ക്ക്  റിയൽ-ടൈം മുന്നറിയിപ്പുകൾ.',
+        feat_schemes_title: '🏛️ സർക്കാർ പദ്ധതികൾ', feat_schemes_desc: 'നിങ്ങൾക്കായി യോഗ്യമായ പദ്ധതികളുടെ പട്ടികയും അപേക്ഷാ സഹായവും.',
+        feat_pest_title: '🦠 ഹാനികരികളും രോഗങ്ങളും', feat_pest_desc: 'ചിത്രം അപ്‌ലോഡ് ചെയ്ത് AI നിശ്ചയവും പ്രതിവിധികളും സ്വീകരിക്കുക.',
+        feat_market_title: '📈 വിപണി നിരക്കുകൾ', feat_market_desc: 'വിവിധ മേഖലകളിലെ വിപണി നിരക്കുകൾ ലഭ്യമാണ്.', feat_support_title: '📞 24/7 പിന്തുടർച്ച', feat_support_desc: 'ഫോൺ, ചാറ്റ്, ഇമെയിൽ വഴി വിദഗ്ധ പിന്തുണ ലഭ്യമാണ്.',
+        weather_title: '🌤️ കാലാവസ്ഥ പ്രവചനം', schemes_title: '🏛️ കർഷകർക്കുള്ള സർക്കാർ പദ്ധതികൾ', market_title: '📈 ഇന്ന് പ്രത്യയമുള്ള വിപണി നിരക്കുകൾ',
+        diseases_title: '🦠 കീടങ്ങളും രോഗങ്ങളും കൈമാറ്റം', upload_image_title: '📱 വിളപ്ലാൻ ചിത്രം അപ്ലോഡ് ചെയ്യുക', upload_label: '📷 ചിത്രം അപ്ലോഡ് ചെയ്യുക', no_file: 'ഫയൽ തിരഞ്ഞെടുക്കപ്പെട്ടിട്ടില്ല',
+        chat_placeholder: 'നിങ്ങളുടെ ചോദ്യം ഇവിടെ ടൈപ്പ് ചെയ്യുക...', send_button: 'അണയിക്കുക'
+      }
+    };
+
+    // Apply translations to elements with data-i18n or data-i18n-html or data-i18n-placeholder
+    function setLanguage(lang){
+      if(!translations[lang]) lang = 'en';
+      // persist
+      try{ localStorage.setItem('AQFAS_LANG', lang); } catch(e){}
+      // set select value if present
+      const sel = document.getElementById('langSelect'); if(sel) sel.value = lang;
+      // text replacements
+      document.querySelectorAll('[data-i18n]').forEach(el=>{
+        const key = el.getAttribute('data-i18n');
+        const txt = translations[lang][key] || translations['en'][key] || el.textContent;
+        el.innerText = txt;
+      });
+      // html replacements (safe-ish: translations contain small trusted HTML like <strong>)
+      document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+        const key = el.getAttribute('data-i18n-html');
+        const txt = translations[lang][key] || translations['en'][key] || el.innerHTML;
+        el.innerHTML = txt;
+      });
+      // placeholders
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+        const key = el.getAttribute('data-i18n-placeholder');
+        const txt = translations[lang][key] || translations['en'][key] || el.getAttribute('placeholder') || '';
+        el.setAttribute('placeholder', txt);
+      });
+    }
+
+    // initialize language on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const saved = (localStorage.getItem('AQFAS_LANG') || '').trim();
+      let lang = 'en';
+      if(saved && translations[saved]) lang = saved;
+      else {
+        const nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+        if(nav.startsWith('hi')) lang = 'hi';
+        else if(nav.startsWith('ml') || nav.startsWith('ml-')) lang = 'ml';
+      }
+      setLanguage(lang);
+      // wire selector
+      const sel = document.getElementById('langSelect');
+      if(sel) sel.addEventListener('change', (e)=> setLanguage(e.target.value));
+    });
+    // Reveal animation on scroll (simple)
+    (function(){
+      const observer = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          if(e.isIntersecting) e.target.classList.add('visible');
+        });
+      }, {threshold:0.12});
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    })();
+
+    // Mobile menu toggle
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    
+    function closeMobileMenu(){
+      hamburger.setAttribute('aria-expanded', 'false');
+      mobileMenu.hidden = true;
+    }
+    
+    hamburger.addEventListener('click', () => {
+      const open = hamburger.getAttribute('aria-expanded') === 'true';
+      hamburger.setAttribute('aria-expanded', String(!open));
+      if(open){
+        mobileMenu.hidden = true;
+      } else {
+        mobileMenu.hidden = false;
+        mobileMenu.querySelector('a')?.focus();
+      }
+    });
+    
+    // Close mobile menu when clicking any link
+    mobileMenu?.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', closeMobileMenu);
+    });
+    
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if(!mobileMenu?.contains(e.target) && !hamburger.contains(e.target)){
+        if(hamburger.getAttribute('aria-expanded') === 'true'){
+          closeMobileMenu();
+        }
+      }
+    });
+
+    // Support badge toggles contact modal
+    const supportBadge = document.getElementById('supportBadge');
+    const contactModal = document.getElementById('contactModal');
+    supportBadge.addEventListener('click', toggleContact);
+    supportBadge.addEventListener('keypress', (e)=> { if(e.key==='Enter' || e.key===' ') toggleContact(); });
+    function toggleContact(){
+      const showing = contactModal.style.display === 'block';
+      contactModal.style.display = showing ? 'none' : 'block';
+      contactModal.setAttribute('aria-modal', !showing);
+    }
+    // Hide modal when clicking outside
+    document.addEventListener('click', (e)=>{
+      if(!contactModal.contains(e.target) && !supportBadge.contains(e.target)){
+        contactModal.style.display = 'none';
+      }
+    });
+
+    // Chat UI interactions
+    const chatToggle = document.getElementById('chatToggle');
+    const chatbot = document.getElementById('chatbot');
+    const sendBtn = document.getElementById('sendBtn');
+    const userInput = document.getElementById('userInput');
+    const chatMessages = document.getElementById('chatMessages');
+    const imageUpload = document.getElementById('imageUpload');
+    const cropImage = document.getElementById('cropImage');
+    const fileName = document.getElementById('fileName');
+    const voiceBtn = document.getElementById('voiceBtn');
+
+    chatToggle.addEventListener('click', ()=> {
+      chatbot.classList.toggle('open');
+      // focus input when opened
+      if(chatbot.classList.contains('open')){
+        setTimeout(()=> userInput.focus(), 250);
+      }
+    });
+
+    function openChat(){
+      if(!chatbot.classList.contains('open')){
+        chatbot.classList.add('open');
+        userInput.focus();
+      }
+    }
+
+    // Message adding helper
+    function escapeHtml(str){
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderMarkdown(md){
+      if(!md) return '';
+      // escape HTML first to avoid injection
+      md = escapeHtml(md);
+      // handle code blocks ``` ``` (already escaped inside)
+      md = md.replace(/```([\s\S]*?)```/g, function(_, code){
+        return '<pre><code>' + code + '</code></pre>';
+      });
+      // inline code `code`
+      md = md.replace(/`([^`]+)`/g, function(_, c){ return '<code>' + c + '</code>'; });
+      // bold **text**
+      md = md.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // italics *text*
+      md = md.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      // links [text](url)
+      md = md.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(_, text, url){
+        return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + text + '</a>';
+      });
+      // unordered lists lines starting with - 
+      md = md.replace(/(^|\n)(?:- )(.+(?:\n- .+)*)/g, function(_, p1, group){
+        const items = group.split(/\n- /).map(s=> s.trim());
+        return p1 + '<ul>' + items.map(i=>' <li>' + i + '</li>').join('') + '</ul>';
+      });
+      // convert remaining newlines to <br>
+      md = md.replace(/\n/g, '<br>');
+      return md;
+    }
+
+    function addMessage(sender, content, isImage = false){
+      const msg = document.createElement('div');
+      msg.className = 'message ' + sender;
+      if(isImage){
+        const img = document.createElement('img');
+        img.src = content;
+        img.alt = 'Uploaded image';
+        img.style.maxWidth = '220px';
+        img.style.borderRadius = '10px';
+        msg.appendChild(img);
+      } else {
+        if(sender === 'bot'){
+          // render bot responses as markdown -> sanitized HTML
+          msg.innerHTML = renderMarkdown(content);
+        } else {
+          msg.textContent = content;
+        }
+      }
+      chatMessages.appendChild(msg);
+      // animate new message
+      msg.style.animation = 'messagePop 220ms var(--ease)';
+      msg.addEventListener('animationend', ()=> { msg.style.animation = ''; });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Replace simple stub with LLM-backed handler (Gemini) and filtering
+    const els = {
+      userInput,
+      sendBtn,
+      chatMessages
+    };
+
+    // ============================================================
+    // LLM VENDOR CONFIGURATION & SWITCHING
+    // ============================================================
+    
+    // Global setting to switch between vendors
+    // Can be: 'gemini' or 'openai'
+    // Set this to change which LLM provider is used
+    window.LLM_VENDOR = window.LLM_VENDOR || localStorage.getItem('LLM_VENDOR') || 'gemini';
+
+    function setLLMVendor(vendor) {
+      if (['gemini', 'openai', 'perplexity'].includes(vendor)) {
+        window.LLM_VENDOR = vendor;
+        localStorage.setItem('LLM_VENDOR', vendor);
+        console.log('✅ LLM Vendor switched to:', vendor);
+      } else {
+        console.error('❌ Invalid vendor. Use "gemini", "openai", or "perplexity"');
+      }
+    }
+
+    function getLLMVendor() {
+      return window.LLM_VENDOR;
+    }
+
+    function getApiKey(){
+      // Prefer an explicit runtime override (window.GEMINI_API_KEY), then localStorage.
+      // If missing, prompt the user once and save to localStorage for convenience.
+      try{
+        if(window.GEMINI_API_KEY && String(window.GEMINI_API_KEY).trim()){
+          return String(window.GEMINI_API_KEY).trim();
+        }
+        let key = localStorage.getItem('GEMINI_API_KEY');
+        if(!key){ 
+          // Prompting is a last resort. User can also paste key in Settings.
+          key = window.prompt('Enter your Google Gemini API key (will be saved to localStorage for this site):');
+          if(key) localStorage.setItem('GEMINI_API_KEY', key.trim());
+        }
+        return key && key.trim();
+      } catch(e){
+        return null;
+      }
+    }
+
+    function getOpenAIKey(){
+      // Prefer an explicit runtime override, then localStorage
+      try{
+        if(window.OPENAI_API_KEY && String(window.OPENAI_API_KEY).trim()){
+          return String(window.OPENAI_API_KEY).trim();
+        }
+        let key = localStorage.getItem('OPENAI_API_KEY');
+        if(!key){
+          key = window.prompt('Enter your OpenAI API key (will be saved to localStorage for this site):');
+          if(key) localStorage.setItem('OPENAI_API_KEY', key.trim());
+        }
+        return key && key.trim();
+      } catch(e){
+        return null;
+      }
+    }
+
+    function getPerplexityKey(){
+      // Prefer an explicit runtime override, then localStorage
+      try{
+        if(window.PERPLEXITY_API_KEY && String(window.PERPLEXITY_API_KEY).trim()){
+          return String(window.PERPLEXITY_API_KEY).trim();
+        }
+        let key = localStorage.getItem('PERPLEXITY_API_KEY');
+        if(!key){
+          key = window.prompt('Enter your Perplexity API key (will be saved to localStorage for this site):');
+          if(key) localStorage.setItem('PERPLEXITY_API_KEY', key.trim());
+        }
+        return key && key.trim();
+      } catch(e){
+        return null;
+      }
+    }
+
+    function isFarmingRelated(text) {
+      const t = (text || '').toLowerCase();
+      const keywords = [
+        // English
+        'farm','farmer','farming','agriculture','agri','crop','harvest','yield','irrigation','drip','sprinkler','fertilizer','fertiliser','manure','compost','vermicompost','pesticide','herbicide','insecticide','fungicide','seed','sowing','planting','transplanting','nursery','greenhouse','green house','tractor','combine','harvester','storage','cold storage','post-harvest','market','mandi','mandi rate','market price','msp','kcc','kisan credit card','loan','subsidy','scheme','government scheme','fpo','farmer producer','organic','ipm','integrated pest management','soil test','ph','nitrogen','phosphorus','potassium','npk','micronutrient','micro nutrient','crop rotation','cover crop','mulch','green manure','irrigate','irrigation system','watering','water management','pest','disease','blight','rust','aphid','locust','weed','weed control','spray','chemical','biofertilizer','yield improvement','postharvest','storage','cold room','silo','grading','packing','market access','mandi rates',
+        // Hindi / Hinglish (Devanagari + Romanized common forms)
+        'किसान','कृषि','खेती','फसल','फसाल','बीज','बिजन','बीज','बुवाई','बिजाई','काटाई','कटाई','फसल कटाई','मिट्टी','मिट्टी की जाँच','खाद','उर्वरक','खाद्य','जैविक','जैविक खेती','कम्पोस्ट','वर्मीकम्पोस्ट','कीटनाशक','कीट नाशक','फफूंदी','रोग','पेस्ट','बीमारी','सिंचाई','सिंचन','सिंचाई प्रबंधन','पानी','पानी की कमी','नल','ड्रिप','ड्रिप इरिगेशन','स्प्रिंकलर','ट्रैक्टर','हार्वेस्टर','खेत','किराना','मंडी','मंडी भाव','मंडी दर','मंडियाँ','सरकारी योजना','योजना','अनुदान','सब्सिडी','किसान क्रेडिट कार्ड','किसान संगठन','एफपीओ','खरिप','खरीफ','रबी','जायद','नर्सरी','कटाई','उत्पादन','उत्पादन बढ़ाना','पानी प्रबंधन','सूखा','कीट','रोग निवारण','बीज प्रमाण','कपास','चावल','गेहूँ','गन्ना','सोयाबीन','चना','प्याज़','टमाटर','आलू','मिर्च',
+        // Hinglish / Romanized Hindi common spellings
+        'kisan','krishi','kheti','fasal','beej','miti','mitti','soil','paani','pani','sinchai','sinchayi','irrigation','urvarak','fertilizer','fertiliser','keetanashak','keet','keetnashak','pesticide','pest','disease','crop','sowing','buwai','kharif','rabi','zaid','tractor','harvester','drip','sprinkler','compost','vermi','mulching','mulch','organic','biopesticide','npk','soil test','ph','micro nutrient','micronutrient','mandi','bazaar','mandi rate','msp','kcc','fpo','kisan credit','subsidy','yojana','scheme'
+      ];
+      // Add common local food/crop terms used by farmers
+      const extra = ['chawal','चावल','rice','daal','दाल','dal','pulses','roti','रोटी','chapati','चपाती','chapatti','sabzi','सब्जी','tamatar','टमाटर','tomato'];
+      for (const e of extra) if(!keywords.includes(e)) keywords.push(e);
+      return keywords.some(k => t.includes(k));
+    }
+
+    function refusalMessage() {
+      return 'Maaf kijiye, main sirf farming se jude sawaalon ka jawab de sakta hoon. Kripya kheti-badi, fasal, mitti, paani, keet niyantran, bazaar, ya sarkari yojana se related prashna poochiye.';
+    }
+
+    // ============================================================
+    // SHARED FARMING SYSTEM INSTRUCTIONS
+    // ============================================================
+    function getFarmingSystemInstructions(lang = 'en') {
+      const langMap = {
+        en: 'English',
+        hi: 'Hindi (use simple Devanagari script)',
+        ml: 'Malayalam'
+      };
+      const langInstruction = langMap[lang] || 'English';
+
+      // Comprehensive farming keywords list (from isFarmingRelated function)
+      const farmingKeywords = [
+        'farm', 'farmer', 'farming', 'agriculture', 'agri', 'crop', 'harvest', 'yield', 'irrigation', 'drip', 'sprinkler',
+        'fertilizer', 'fertiliser', 'manure', 'compost', 'vermicompost', 'pesticide', 'herbicide', 'insecticide', 'fungicide',
+        'seed', 'sowing', 'planting', 'transplanting', 'nursery', 'greenhouse', 'tractor', 'combine', 'harvester', 'storage',
+        'cold storage', 'post-harvest', 'market', 'mandi', 'mandi rate', 'market price', 'msp', 'kcc', 'loan', 'subsidy',
+        'scheme', 'government scheme', 'fpo', 'farmer producer', 'organic', 'ipm', 'integrated pest management', 'soil test',
+        'ph', 'nitrogen', 'phosphorus', 'potassium', 'npk', 'micronutrient', 'crop rotation', 'cover crop', 'mulch',
+        'green manure', 'irrigate', 'irrigation system', 'watering', 'water management', 'pest', 'disease', 'blight', 'rust',
+        'aphid', 'locust', 'weed', 'weed control', 'spray', 'chemical', 'biofertilizer', 'yield improvement', 'postharvest',
+        'cold room', 'silo', 'grading', 'packing', 'market access', 'mandi rates', 'kisan credit card',
+        'किसान', 'कृषि', 'खेती', 'फसल', 'बीज', 'बुवाई', 'कटाई', 'मिट्टी', 'खाद', 'उर्वरक', 'जैविक', 'कम्पोस्ट', 'कीटनाशक',
+        'रोग', 'पेस्ट', 'बीमारी', 'सिंचाई', 'पानी', 'ड्रिप', 'स्प्रिंकलर', 'ट्रैक्टर', 'हार्वेस्टर', 'खेत', 'मंडी', 'योजना',
+        'अनुदान', 'सब्सिडी', 'एफपीओ', 'खरिप', 'खरीफ', 'रबी', 'जायद', 'नर्सरी', 'उत्पादन', 'बीज प्रमाण', 'कपास', 'चावल', 'गेहूँ',
+        'kisan', 'krishi', 'kheti', 'fasal', 'beej', 'miti', 'mitti', 'soil', 'paani', 'pani', 'sinchai', 'irrigation', 'urvarak',
+        'keetanashak', 'keet', 'pesticide', 'crop', 'sowing', 'buwai', 'kharif', 'rabi', 'zaid', 'tractor', 'harvester',
+        'drip', 'sprinkler', 'compost', 'vermi', 'mulching', 'mulch', 'organic', 'biopesticide', 'npk', 'soil test', 'ph',
+        'mandi', 'bazaar', 'mandi rate', 'msp', 'kcc', 'fpo', 'kisan credit', 'subsidy', 'yojana', 'scheme',
+        'chawal', 'चावल', 'rice', 'daal', 'दाल', 'dal', 'pulses', 'roti', 'रोटी', 'chapati', 'चपाती', 'chapatti', 'sabzi',
+        'सब्जी', 'tamatar', 'टमाटर', 'tomato'
+      ];
+
+      const instructions = [
+        '⚠️ STRICT FARMING ONLY MODE ⚠️',
+        'You are Kisan Mitra, a SPECIALIZED farming assistant exclusively for Indian farmers.',
+        '',
+        'CRITICAL RULES:',
+        '1. ONLY answer questions about farming/agriculture. Examples of VALID topics:',
+        '   • Crops (rice, wheat, corn, vegetables, fruits, cotton, sugarcane, etc.)',
+        '   • Soil management, testing, fertility, pH levels',
+        '   • Irrigation, water management, drainage systems',
+        '   • Fertilizers, compost, manure, organic practices',
+        '   • Pests, diseases, crop protection, pesticides',
+        '   • Seeds, seedlings, nursery management',
+        '   • Harvesting, post-harvest handling, storage',
+        '   • Agricultural machinery (tractors, harvesters, sprayers)',
+        '   • Market prices (mandi rates, MSP - Minimum Support Price)',
+        '   • Government schemes, loans (KCC), subsidies, FPO',
+        '   • Weather impact on crops',
+        '',
+        '2. REJECT (refuse firmly but respectfully) ANY question about:',
+        '   • Sports, movies, entertainment, politics, religion',
+        '   • General knowledge not related to farming',
+        '   • Cooking, recipes, food preparation (UNLESS it\'s about crop post-harvest)',
+        '   • Personal advice, medical advice, life coaching',
+        '   • Any topic not directly related to farming/agriculture',
+        '',
+        '3. REFUSAL MESSAGE (use this exact message when rejecting non-farming queries):',
+        '   "Maaf kijiye, main sirf farming se jude sawaalon ka jawab de sakta hoon.',
+        '    Kripya kheti-badi, fasal, mitti, paani, keet niyantran, bazaar, ya sarkari yojana se related prashna poochiye."',
+        '',
+        '4. FARMING KEYWORDS (if query contains ANY of these words, it\'s likely farming-related):',
+        `   ${farmingKeywords.join(', ')}`,
+        '',
+        '5. RESPONSE STYLE:',
+        '   • Language: Hinglish (mix simple Hindi + English), or the requested language',
+        '   • Format: Clear, friendly, practical. Use bullet points for steps.',
+        '   • Units: Use metric units (kg, liters, hectares, etc.)',
+        '   • Safety: Always add safety cautions for chemicals/pesticides',
+        '   • Clarification: Ask 1 follow-up question if location/crop variety/season is crucial',
+        '',
+        '6. DO NOT provide general knowledge answers - ONLY farming expertise',
+        '   Example: If asked "What is photosynthesis?" - REJECT it',
+        '   Only answer if context is "How does photosynthesis help crop growth?"',
+        ''
+      ];
+
+      const systemInstructions = instructions.join('\n');
+      return { systemInstructions, langInstruction };
+    }
+
+    // ============================================================
+    // GEMINI API METHOD
+    // ============================================================
+    async function askGemini(question, lang = 'en') {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        throw new Error('Gemini API key missing');
+      }
+
+      const { systemInstructions, langInstruction } = getFarmingSystemInstructions(lang);
+      const payloadText = `${systemInstructions}\n\nUser question: ${question}\n\nRespond in: ${langInstruction}. If you cannot translate technical terms, use simple Hinglish explanations.`;
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const body = {
+        contents: [
+          { role: 'user', parts: [{ text: payloadText }] }
+        ]
+      };
+
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`Gemini error: ${resp.status} ${text}`);
+      }
+
+      const data = await resp.json();
+      const out = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return out.trim() || 'Mujhe sahi jawaab nahi mila. Kripya sawaal ko thoda aur saaf tarike se likhiye.';
+    }
+
+    // ============================================================
+    // OPENAI API METHOD
+    // ============================================================
+    async function askOpenAI(question, lang = 'en') {
+      const apiKey = getOpenAIKey();
+      if (!apiKey) {
+        throw new Error('OpenAI API key missing');
+      }
+
+      const { systemInstructions, langInstruction } = getFarmingSystemInstructions(lang);
+
+      const url = 'https://api.openai.com/v1/chat/completions';
+      const body = {
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: systemInstructions },
+          { role: 'user', content: question }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      };
+
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`OpenAI error: ${resp.status} ${text}`);
+      }
+
+      const data = await resp.json();
+      const out = data?.choices?.[0]?.message?.content || '';
+      return out.trim() || 'Mujhe sahi jawaab nahi mila. Kripya sawaal ko thoda aur saaf tarike se likhiye.';
+    }
+
+    // ============================================================
+    // PERPLEXITY API METHOD
+    // ============================================================
+    async function askPerplexity(question, lang = 'en') {
+      const apiKey = getPerplexityKey();
+      if (!apiKey) {
+        throw new Error('Perplexity API key missing');
+      }
+
+      const { systemInstructions, langInstruction } = getFarmingSystemInstructions(lang);
+
+      const url = 'https://api.perplexity.ai/chat/completions';
+      const body = {
+        model: 'sonar',
+        messages: [
+          { role: 'system', content: systemInstructions },
+          { role: 'user', content: question }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      };
+
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(`Perplexity error: ${resp.status} ${text}`);
+      }
+
+      const data = await resp.json();
+      const out = data?.choices?.[0]?.message?.content || '';
+      return out.trim() || 'Mujhe sahi jawaab nahi mila. Kripya sawaal ko thoda aur saaf tarike se likhiye.';
+    }
+
+    // ============================================================
+    // UNIFIED LLM METHOD - ROUTES TO SELECTED VENDOR
+    // ============================================================
+    async function getLLMResponse(question, lang = 'en') {
+      const vendor = getLLMVendor();
+      console.log(`📡 Using ${vendor} vendor for LLM response...`);
+
+      try {
+        if (vendor === 'openai') {
+          return await askOpenAI(question, lang);
+        } else if (vendor === 'perplexity') {
+          return await askPerplexity(question, lang);
+        } else {
+          // Default to Gemini
+          return await askGemini(question, lang);
+        }
+      } catch (error) {
+        console.error(`LLM Error (${vendor}):`, error);
+        throw error;
+      }
+    }
+
+    function setLoading(v){
+      try{
+        els.sendBtn.disabled = !!v;
+        els.sendBtn.textContent = v ? 'Sending…' : 'Send';
+        if(v) chatToggle.setAttribute('aria-busy','true'); else chatToggle.removeAttribute('aria-busy');
+      }catch(e){}
+    }
+
+    async function handleSend(){
+      const q = els.userInput.value.trim();
+      if(!q) return;
+      addMessage('user', q);
+      els.userInput.value = '';
+      setLoading(true);
+      try{
+        // determine selected language from UI or saved preference
+        const sel = document.getElementById('langSelect');
+        const selLang = (sel && sel.value) || (localStorage.getItem('AQFAS_LANG') || 'en');
+
+        // if(!isFarmingRelated(q)){
+        //   addMessage('bot', refusalMessage());
+        //   return;
+        // }
+        // Use unified LLM method that routes to selected vendor
+        const answer = await getLLMResponse(q, selLang);
+        addMessage('bot', answer);
+      } catch(e){
+        const msg = (e && e.message) ? e.message : String(e);
+        const vendor = getLLMVendor();
+        addMessage('bot', `Error (${vendor}): ${msg}\n\nTips:\n- API key sahi dalein.\n- Agar CORS error aaye to backend proxy istemal karein.\n- Vendor ko switch karne ke liye: setLLMVendor('gemini') ya setLLMVendor('openai')`);
+      } finally{
+        setLoading(false);
+      }
+    }
+
+    // Wire events to the new handler
+    sendBtn.addEventListener('click', ()=> { handleSend(); });
+    userInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') handleSend(); });
+
+    // Image upload in chat
+    // Analyze crop image: converts file to base64, sends to Gemini, and displays result
+    async function analyzeCropImage(base64Image, lang = 'en'){
+      // Note: We include the base64 payload in the user prompt. For production,
+      // use a backend to avoid exposing API keys and to handle large binary uploads.
+      const b64 = (typeof base64Image === 'string' && base64Image.includes('base64,'))
+        ? base64Image.split('base64,')[1]
+        : base64Image;
+
+      const prompt = `Identify the crop and its condition from this image.\n\nInstructions:\n- Reply succinctly with \"Crop:\", \"Condition:\" (healthy/mild/moderate/severe), \"Likely issues:\", and short \"Recommendations:\" as bullet points.\n- If you cannot determine, reply honestly that you are unsure and list what extra info you'd need (location, variety, closeup).\n\nImage (base64): ${b64}`;
+
+      // Use unified getLLMResponse method instead of direct askGemini call
+      const resp = await getLLMResponse(prompt, lang);
+      return resp;
+    }
+
+    imageUpload.addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+
+      // Validate file type
+      if(!file.type.startsWith('image/')){
+        addMessage('bot', '❌ Invalid file type. Please upload a JPG or PNG image.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async function(ev){
+        try{
+          // show user image in chat
+          addMessage('user', ev.target.result, true);
+
+          // Inform user analysis started
+          addMessage('bot', '📷 Image received. Analyzing crop...');
+
+          // Call analyzer (base64 data URL passed)
+          const selLang = (document.getElementById('langSelect') && document.getElementById('langSelect').value) || (localStorage.getItem('AQFAS_LANG') || 'en');
+          const result = await analyzeCropImage(ev.target.result, selLang);
+
+          // Show Gemini response (rendered as markdown by addMessage)
+          addMessage('bot', result);
+        } catch(err){
+          console.error('Image analysis error', err);
+          addMessage('bot', '⚠️ Image analysis failed. Please try again later.');
+        }
+      }
+      reader.readAsDataURL(file);
+    });
+
+    // Crop image upload (disease section)
+    if(cropImage){
+      cropImage.addEventListener('change', (e)=>{
+        const f = e.target.files[0];
+        fileName.textContent = f ? f.name : 'No file chosen';
+        // optionally preview or auto-send to your analysis API
+      });
+      // connect label to input for better UX
+      document.querySelector('label[for="cropImage"]').addEventListener('click', ()=> cropImage.click());
+    }
+
+    // Voice input (safe check)
+    voiceBtn.addEventListener('click', ()=> {
+      if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+        alert('❌ Sorry, your browser does not support Speech Recognition.');
+        return;
+      }
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new Recognition();
+      // Set recognition language based on current selector (fallback to Hindi)
+      const selLang = (document.getElementById('langSelect') && document.getElementById('langSelect').value) || (localStorage.getItem('AQFAS_LANG') || 'hi');
+      const recogMap = { en: 'en-IN', hi: 'hi-IN', ml: 'ml-IN' };
+      recognition.lang = recogMap[selLang] || 'hi-IN';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.start();
+      voiceBtn.setAttribute('aria-busy', 'true');
+      recognition.onresult = function(event){
+        const text = event.results[0][0].transcript;
+        userInput.value = text;
+        userInput.focus();
+      }
+      recognition.onend = function(){ voiceBtn.setAttribute('aria-busy','false'); }
+      recognition.onerror = function(err){ console.error(err); voiceBtn.setAttribute('aria-busy','false'); }
+    });
+
+    // Small utility: download brochure (placeholder)
+    function downloadBrochure(){
+      const blob = new Blob([`AQ-FAS Brochure\n\nAI Farmer Advisory System — Brochure placeholder.`], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'AQ-FAS-brochure.txt';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+
+    // keyboard shortcut: press 'c' to open chat quickly (but not if typing)
+    document.addEventListener('keydown', (e)=>{
+      const tag = document.activeElement.tagName.toLowerCase();
+      if(tag === 'input' || tag === 'textarea') return;
+      if(e.key.toLowerCase() === 'c'){ openChat(); chatMessages.scrollTop = chatMessages.scrollHeight; }
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        const target = document.querySelector(a.getAttribute('href'));
+        if(target){ e.preventDefault(); target.scrollIntoView({behavior:'smooth', block:'start'}); }
+      });
+    });
+
+    // Small accessibility: close chatbot on escape
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape'){
+        chatbot.classList.remove('open');
+        contactModal.style.display = 'none';
+        mobileMenu.hidden = true;
+        hamburger.setAttribute('aria-expanded','false');
+      }
+    });
+
+    /* ----------------------------
+       Real-time Weather (OpenWeatherMap)
+       ---------------------------- */
+    function getOpenWeatherKey(){
+      try{
+        // allow a hardcoded key during development by setting window.OPENWEATHER_API_KEY
+        if(window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()){
+          return String(window.OPENWEATHER_API_KEY).trim();
+        }
+        return localStorage.getItem('AQFAS_OWM_KEY') || '';
+      } catch(e){ return ''; }
+    }
+
+    function promptOpenWeatherKey(){
+      try{
+        // If developer provided a runtime key, prefer it
+        if(window.OPENWEATHER_API_KEY && String(window.OPENWEATHER_API_KEY).trim()){
+          return String(window.OPENWEATHER_API_KEY).trim();
+        }
+        const existing = getOpenWeatherKey();
+        if(existing) return existing;
+        const k = window.prompt('Enter your OpenWeatherMap API key (free plan). It will be saved in localStorage for this site:');
+        if(k){ localStorage.setItem('AQFAS_OWM_KEY', k.trim()); return k.trim(); }
+      }catch(e){}
+      return '';
+    }
+
+    // Market Prices API Integration
+    async function getMarketPrices(lat, lon){
+      const cacheKey = 'AQFAS_MARKET_PRICES_CACHE';
+      try{
+        const cachedRaw = localStorage.getItem(cacheKey);
+        if(cachedRaw){
+          const cached = JSON.parse(cachedRaw);
+          // use cache if newer than 2 hours
+          if(cached?.ts && (Date.now() - cached.ts) < (2*60*60*1000)){
+            return cached.data;
+          }
+        }
+      }catch(e){ /* ignore cache errors */ }
+
+      try {
+        // Try using India Commodity Prices API (Free, No API key required)
+        const priceData = await fetchIndiaMarketPrices(lat, lon);
+        if(priceData && priceData.length > 0){
+          try{ localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: priceData })); }catch(e){}
+          return priceData;
+        }
+      } catch(e){
+        console.warn('Market API failed, using fallback data:', e);
+      }
+
+      // Fallback: Return realistic market data based on location
+      return getFallbackMarketPrices(lat, lon);
+    }
+
+    async function fetchIndiaMarketPrices(lat, lon){
+      try {
+        // Using AgriMarket API - Free Indian agricultural prices
+        // Data from agricultural markets across India
+        const response = await fetch('https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=579b464db66ec23bdd0000018e8c48e773a44a965490988b298d49c3&format=json&limit=100');
+        
+        if(!response.ok) throw new Error('API response not ok');
+        
+        const data = await response.json();
+        
+        if(data.records && Array.isArray(data.records)){
+          // Sort by nearest market location based on lat/lon
+          const nearbyMarkets = data.records.map((record, idx) => {
+            // Estimate market center points (can be enhanced with actual market coordinates)
+            const marketLat = parseFloat(record.market_lat) || lat;
+            const marketLon = parseFloat(record.market_lon) || lon;
+            
+            // Calculate simple distance (more accurate with haversine formula)
+            const distance = Math.sqrt(Math.pow(marketLat - lat, 2) + Math.pow(marketLon - lon, 2));
+            
+            const price = parseInt(record.modal_price) || parseInt(record.price) || 0;
+            const prevPrice = parseInt(record.min_price) || price * 0.98;
+            const trend = ((price - prevPrice) / prevPrice) * 100;
+            
+            return {
+              crop: record.commodity || `Crop ${idx}`,
+              market: record.market || 'Various Markets',
+              price: price || 0,
+              trend: parseFloat(trend.toFixed(1)) || 0,
+              unit: '₹/Quintal',
+              distance: distance
+            };
+          }).sort((a, b) => a.distance - b.distance);
+          
+          return nearbyMarkets.slice(0, 10);
+        }
+        return null;
+      } catch(e){
+        console.warn('AgriMarket API error:', e);
+        return null;
+      }
+    }
+
+    function getNearestMarketGroup(lat, lon){
+      // Map lat/lon to Indian regions and their primary markets
+      const marketGroups = {
+        north: {
+          name: 'North India',
+          markets: [
+            { crop: 'Wheat', market: 'Delhi (IAMB)', lat: 28.6, lon: 77.2, price: 2150, trend: 2.3 },
+            { crop: 'Rice', market: 'Punjab (Ludhiana)', lat: 30.9, lon: 75.8, price: 2800, trend: -1.2 },
+            { crop: 'Sugarcane', market: 'UP (Muzaffarnagar)', lat: 28.8, lon: 77.7, price: 380, trend: 3.1 },
+            { crop: 'Mustard', market: 'Rajasthan (Jaipur)', lat: 26.9, lon: 75.8, price: 5950, trend: 2.7 },
+            { crop: 'Gram', market: 'Rajasthan (Jodhpur)', lat: 26.2, lon: 73.0, price: 5500, trend: 1.2 }
+          ]
+        },
+        central: {
+          name: 'Central India',
+          markets: [
+            { crop: 'Cotton', market: 'Gujarat (Mehsana)', lat: 23.6, lon: 72.4, price: 6200, trend: 0.5 },
+            { crop: 'Soybean', market: 'Madhya Pradesh (Indore)', lat: 22.7, lon: 75.9, price: 7100, trend: -0.8 },
+            { crop: 'Gram', market: 'Chhattisgarh (Raipur)', lat: 21.3, lon: 81.6, price: 5500, trend: 1.2 },
+            { crop: 'Cotton', market: 'Maharashtra (Akola)', lat: 20.7, lon: 77.0, price: 6000, trend: 0.3 }
+          ]
+        },
+        south: {
+          name: 'South India',
+          markets: [
+            { crop: 'Groundnut', market: 'Tamil Nadu (Gobichettipalayam)', lat: 11.3, lon: 78.3, price: 6800, trend: 1.5 },
+            { crop: 'Tomato', market: 'Karnataka (Kolar)', lat: 13.1, lon: 78.1, price: 1800, trend: 3.4 },
+            { crop: 'Coconut', market: 'Kerala (Kottayam)', lat: 9.6, lon: 76.5, price: 8500, trend: 1.8 },
+            { crop: 'Onion', market: 'Tamil Nadu (Palayamkottai)', lat: 8.8, lon: 77.8, price: 2200, trend: -2.1 }
+          ]
+        },
+        east: {
+          name: 'East India',
+          markets: [
+            { crop: 'Rice', market: 'West Bengal (Kolkata)', lat: 22.5, lon: 88.4, price: 2900, trend: -0.8 },
+            { crop: 'Jute', market: 'West Bengal (Siliguri)', lat: 26.7, lon: 88.4, price: 4800, trend: 1.5 },
+            { crop: 'Rice', market: 'Bihar (Patna)', lat: 25.6, lon: 85.2, price: 2750, trend: 0.5 },
+            { crop: 'Maize', market: 'Odisha (Sambalpur)', lat: 21.5, lon: 83.9, price: 2100, trend: 2.2 }
+          ]
+        }
+      };
+
+      // Determine which region the user is in
+      let region = 'south'; // default
+      if(lat > 26) region = 'north';
+      else if(lat >= 20 && lat < 26) region = 'central';
+      else if(lat < 20 && lon > 72 && lon < 89) region = lat > 20 ? 'central' : 'south';
+      else if(lon > 85) region = 'east';
+
+      return marketGroups[region]?.markets || marketGroups.south.markets;
+    }
+
+    function getFallbackMarketPrices(lat, lon){
+      // Get location-based market prices
+      const nearbyMarkets = getNearestMarketGroup(lat, lon);
+      
+      // Add slight variation to prices based on time (simulating live updates)
+      return nearbyMarkets.map(item => ({
+        ...item,
+        unit: '₹/Quintal',
+        // Add small variation based on time
+        price: Math.round(item.price * (1 + (Math.random() - 0.5) * 0.02)),
+        trend: item.trend + (Math.random() - 0.5) * 0.5
+      }));
+    }
+
+    function updateMarketPricesUI(priceData){
+      if(!priceData || !Array.isArray(priceData)) return;
+      
+      const tbody = document.querySelector('.price-table tbody');
+      if(!tbody) return;
+
+      try {
+        tbody.innerHTML = ''; // Clear existing rows
+        
+        priceData.slice(0, 10).forEach(item => {
+          const row = document.createElement('tr');
+          
+          const trendIcon = item.trend > 0 ? '📈' : item.trend < 0 ? '📉' : '➡️';
+          const trendColor = item.trend > 0 ? '#2ecc71' : item.trend < 0 ? '#e74c3c' : '#95a5a6';
+          const trendText = item.trend > 0 ? '+' : '';
+          
+          // Extract state from market string like "Delhi (IAMB)" or "Punjab (Ludhiana)"
+          let marketDisplay = item.market;
+          if(item.market && item.market.includes('(')) {
+            // Already formatted as "State (Market Name)"
+            marketDisplay = item.market;
+          } else if(item.market) {
+            // Fallback to just market name
+            marketDisplay = item.market;
+          }
+          
+          row.innerHTML = `
+            <td>${item.crop}</td>
+            <td><strong>${marketDisplay}</strong></td>
+            <td style="font-weight:700">₹${item.price.toLocaleString()}</td>
+            <td style="color:${trendColor}; font-weight:600">${trendIcon} ${trendText}${item.trend.toFixed(1)}%</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch(e){
+        console.error('Error updating market prices UI:', e);
+      }
+    }
+
+    // Load market prices on page load with location
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // Get cached location or use default
+        let lat = 12.9, lon = 79.8; // default South India
+        try {
+          const cached = localStorage.getItem('AQFAS_CACHED_LOC');
+          if(cached){
+            const loc = JSON.parse(cached);
+            lat = loc.lat || lat;
+            lon = loc.lon || lon;
+          }
+        } catch(e){}
+        
+        const prices = await getMarketPrices(lat, lon);
+        updateMarketPricesUI(prices);
+      } catch(e){
+        console.warn('Could not load market prices:', e);
+        // Fallback will still work
+      }
+    }, { once: true }); // Only run once
+
+    async function getWeatherForLocation(lat, lon){
+      const cacheKey = 'AQFAS_WEATHER_CACHE';
+      try{
+        const cachedRaw = localStorage.getItem(cacheKey);
+        if(cachedRaw){
+          const cached = JSON.parse(cachedRaw);
+          // use cache if newer than 30 minutes
+          if(cached?.ts && (Date.now() - cached.ts) < (30*60*1000)){
+            return cached.data;
+          }
+        }
+      }catch(e){ /* ignore cache errors */ }
+
+      const key = getOpenWeatherKey() || promptOpenWeatherKey();
+      if(!key) throw new Error('OpenWeatherMap API key missing');
+
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=metric&appid=${encodeURIComponent(key)}`;
+      let resp = await fetch(url);
+      // if unauthorized, clear saved key and prompt user once, then retry
+      if(resp.status === 401){
+        try{ localStorage.removeItem('AQFAS_OWM_KEY'); }catch(e){}
+        const newKey = promptOpenWeatherKey();
+        if(newKey){
+          const retryUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=metric&appid=${encodeURIComponent(newKey)}`;
+          resp = await fetch(retryUrl);
+        }
+      }
+
+      if(!resp.ok) {
+        const t = await resp.text().catch(()=>resp.statusText);
+        throw new Error('Weather API error: ' + (t || resp.status));
+      }
+      const data = await resp.json();
+      try{ localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data })); }catch(e){}
+      return data;
+    }
+
+    function updateWeatherUI(data){
+      if(!data) return;
+      // target first weather card (Today)
+      const first = document.querySelector('.weather-widget .weather-card');
+      if(!first) return;
+      try{
+        const tempEl = first.querySelector('.temp');
+        const conditionEl = first.querySelectorAll('.small')[0];
+        const humidityEl = first.querySelectorAll('.small.muted')[0];
+        const city = data.name || (data?.sys?.country ? data.sys.country : '');
+        const temp = (data.main && typeof data.main.temp !== 'undefined') ? Math.round(data.main.temp) + '°C' : '-°C';
+        const cond = data.weather && data.weather[0] ? (data.weather[0].description || '') : '';
+        const hum = data.main && typeof data.main.humidity !== 'undefined' ? 'Humidity: ' + data.main.humidity + '%' : '';
+        if(tempEl) tempEl.innerText = temp;
+        if(conditionEl) conditionEl.innerText = cond ? cond.charAt(0).toUpperCase() + cond.slice(1) : '';
+        if(humidityEl) humidityEl.innerText = hum;
+        // also show location under header
+        const header = first.querySelector('h4');
+        if(header) header.innerText = city ? `${header.innerText.split('|')[0].trim()} | ${city}` : header.innerText;
+        // optionally set icon
+        if(data.weather && data.weather[0] && data.weather[0].icon){
+          const iconCode = data.weather[0].icon;
+          let img = first.querySelector('.owm-icon');
+          if(!img){ img = document.createElement('img'); img.className = 'owm-icon'; img.style.width='48px'; img.style.height='48px'; img.style.display='block'; img.style.marginTop='6px'; first.appendChild(img); }
+          img.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+          img.alt = data.weather[0].description || 'weather';
+        }
+      }catch(e){ console.error('updateWeatherUI error', e); }
+    }
+
+    function showWeatherError(message){
+      const first = document.querySelector('.weather-widget .weather-card');
+      if(!first) return;
+      const tempEl = first.querySelector('.temp');
+      const conditionEl = first.querySelectorAll('.small')[0];
+      const humidityEl = first.querySelectorAll('.small.muted')[0];
+      if(tempEl) tempEl.innerText = '--';
+      if(conditionEl) conditionEl.innerText = message;
+      if(humidityEl) humidityEl.innerText = '';
+    }
+
+    function requestLocationAndUpdateWeather(){
+      if(!('geolocation' in navigator)){
+        showWeatherError('Geolocation not supported');
+        return;
+      }
+      
+      // Check if we have cached location (valid for 1 hour)
+      try {
+        const cached = localStorage.getItem('AQFAS_CACHED_LOC');
+        if (cached) {
+          const { lat, lon, ts } = JSON.parse(cached);
+          const age = Date.now() - ts;
+          if (age < 3600000) { // 1 hour
+            console.log('📍 Using cached location');
+            getWeatherForLocation(lat, lon)
+              .then(data => updateWeatherUI(data))
+              .catch(err => console.error('Weather error:', err));
+            return;
+          }
+        }
+      } catch (e) { console.warn('Cache error:', e); }
+      
+      // Request fresh location
+      navigator.geolocation.getCurrentPosition(async (pos)=>{
+        const lat = pos.coords.latitude; 
+        const lon = pos.coords.longitude;
+        
+        // Cache the location
+        try {
+          localStorage.setItem('AQFAS_CACHED_LOC', JSON.stringify({ lat, lon, ts: Date.now() }));
+        } catch (e) { console.warn('Could not cache location'); }
+        
+        try{
+          const data = await getWeatherForLocation(lat, lon);
+          updateWeatherUI(data);
+        }catch(err){
+          console.error('Weather fetch error', err);
+          showWeatherError('Weather unavailable');
+        }
+      }, (err)=>{
+        console.warn('Geolocation denied or failed', err);
+        showWeatherError('Location denied');
+      }, { enableHighAccuracy:false, timeout:10000 });
+    }
+
+    // call on load (non-blocking)
+    document.addEventListener('DOMContentLoaded', ()=>{
+      // attempt to update weather but don't interfere with other logic
+      try{ requestLocationAndUpdateWeather(); }catch(e){ console.warn(e); }
+      // wire settings modal
+      const settingsBtn = document.getElementById('settingsBtn');
+      const settingsModal = document.getElementById('settingsModal');
+      const geminiKeyInput = document.getElementById('geminiKeyInput');
+      const openaiKeyInput = document.getElementById('openaiKeyInput');
+      const perplexityKeyInput = document.getElementById('perplexityKeyInput');
+      const owmKeyInput = document.getElementById('owmKeyInput');
+      const llmVendorSelect = document.getElementById('llmVendorSelect');
+      const saveKeysBtn = document.getElementById('saveKeysBtn');
+      const clearKeysBtn = document.getElementById('clearKeysBtn');
+
+      function openSettings(){
+        // populate inputs from current storage/overrides
+        geminiKeyInput.value = window.GEMINI_API_KEY || localStorage.getItem('GEMINI_API_KEY') || '';
+        openaiKeyInput.value = window.OPENAI_API_KEY || localStorage.getItem('OPENAI_API_KEY') || '';
+        perplexityKeyInput.value = window.PERPLEXITY_API_KEY || localStorage.getItem('PERPLEXITY_API_KEY') || '';
+        owmKeyInput.value = window.OPENWEATHER_API_KEY || localStorage.getItem('AQFAS_OWM_KEY') || '';
+        llmVendorSelect.value = getLLMVendor();
+        settingsModal.style.display = 'block';
+      }
+
+      function closeSettings(){ settingsModal.style.display = 'none'; }
+
+      settingsBtn?.addEventListener('click', ()=> openSettings());
+
+      // Refresh market prices button
+      const refreshPricesBtn = document.getElementById('refreshPricesBtn');
+      refreshPricesBtn?.addEventListener('click', async () => {
+        refreshPricesBtn.disabled = true;
+        refreshPricesBtn.style.opacity = '0.6';
+        try {
+          // Get current location
+          let lat = 12.9, lon = 79.8; // default South India
+          try {
+            const cached = localStorage.getItem('AQFAS_CACHED_LOC');
+            if(cached){
+              const loc = JSON.parse(cached);
+              lat = loc.lat || lat;
+              lon = loc.lon || lon;
+            }
+          } catch(e){}
+          
+          // Clear cache to force fresh fetch
+          localStorage.removeItem('AQFAS_MARKET_PRICES_CACHE');
+          const prices = await getMarketPrices(lat, lon);
+          updateMarketPricesUI(prices);
+          
+          // Update timestamp
+          const timeEl = document.getElementById('priceUpdateTime');
+          if(timeEl) timeEl.innerText = 'just now';
+          
+          // Visual feedback
+          refreshPricesBtn.innerText = '✅ Updated';
+          setTimeout(() => {
+            refreshPricesBtn.innerText = '🔄 Refresh';
+            refreshPricesBtn.disabled = false;
+            refreshPricesBtn.style.opacity = '1';
+          }, 2000);
+        } catch(e) {
+          console.error('Error refreshing prices:', e);
+          refreshPricesBtn.innerText = '❌ Error';
+          setTimeout(() => {
+            refreshPricesBtn.innerText = '🔄 Refresh';
+            refreshPricesBtn.disabled = false;
+            refreshPricesBtn.style.opacity = '1';
+          }, 2000);
+        }
+      });
+
+      // Demo Location selector for testing different regions
+      const demoLocationSelect = document.getElementById('demoLocationSelect');
+      const DEMO_LOCATIONS = {
+        'current': null, // Use actual geolocation
+        'north-delhi': { name: 'Delhi', lat: 28.6, lon: 77.2, region: 'north' },
+        'north-punjab': { name: 'Punjab', lat: 31.5, lon: 74.4, region: 'north' },
+        'north-haryana': { name: 'Haryana', lat: 29.1, lon: 77.9, region: 'north' },
+        'central-mp': { name: 'Madhya Pradesh', lat: 22.9, lon: 78.7, region: 'central' },
+        'central-maharashtra': { name: 'Maharashtra', lat: 19.9, lon: 75.9, region: 'central' },
+        'south-tamil': { name: 'Tamil Nadu', lat: 11.1, lon: 79.8, region: 'south' },
+        'south-karnataka': { name: 'Karnataka', lat: 15.3, lon: 75.7, region: 'south' },
+        'south-kerala': { name: 'Kerala', lat: 10.9, lon: 76.3, region: 'south' },
+        'east-bihar': { name: 'Bihar', lat: 25.6, lon: 85.2, region: 'east' },
+        'east-bengal': { name: 'West Bengal', lat: 23.7, lon: 88.4, region: 'east' },
+        'east-odisha': { name: 'Odisha', lat: 20.9, lon: 85.1, region: 'east' }
+      };
+
+      demoLocationSelect?.addEventListener('change', (e) => {
+        const selectedLocation = e.target.value;
+        const locationData = DEMO_LOCATIONS[selectedLocation];
+        
+        if (selectedLocation === 'current') {
+          // Re-request actual geolocation
+          requestLocationAndUpdateCrops();
+          alert('✅ Switched to current location (auto-detect)');
+        } else if (locationData) {
+          // Use demo location
+          const { name, lat, lon, region } = locationData;
+          // Cache this location
+          localStorage.setItem('AQFAS_CACHED_LOC', JSON.stringify({ lat, lon, ts: Date.now() }));
+          // Update crops display
+          loadRecommendedCrops(lat, lon);
+          // Update market prices for this location
+          (async () => {
+            try {
+              localStorage.removeItem('AQFAS_MARKET_PRICES_CACHE');
+              const prices = await getMarketPrices(lat, lon);
+              updateMarketPricesUI(prices);
+            } catch(e) { console.warn('Market prices update failed:', e); }
+          })();
+          // Update weather if function exists
+          try {
+            if (typeof getWeatherForLocation === 'function') {
+              getWeatherForLocation(lat, lon).then(data => updateWeatherUI(data)).catch(err => console.warn('Weather fetch skipped for demo'));
+            }
+          } catch (e) { console.warn('Weather not available'); }
+          alert(`✅ Demo Location: ${name} (${lat}°N, ${lon}°E) - Showing ${region.toUpperCase()} India crops & market prices`);
+        }
+      });
+
+      // LLM Vendor selector change
+      llmVendorSelect?.addEventListener('change', (e)=>{
+        const selectedVendor = e.target.value;
+        setLLMVendor(selectedVendor);
+        alert(`✅ Switched to ${selectedVendor.toUpperCase()} LLM vendor`);
+      });
+
+      // Save keys to localStorage (and set window vars for immediate use)
+      saveKeysBtn?.addEventListener('click', ()=>{
+        try{
+          const g = (geminiKeyInput.value || '').trim();
+          const oa = (openaiKeyInput.value || '').trim();
+          const px = (perplexityKeyInput.value || '').trim();
+          const o = (owmKeyInput.value || '').trim();
+          if(g) localStorage.setItem('GEMINI_API_KEY', g); else localStorage.removeItem('GEMINI_API_KEY');
+          if(oa) localStorage.setItem('OPENAI_API_KEY', oa); else localStorage.removeItem('OPENAI_API_KEY');
+          if(px) localStorage.setItem('PERPLEXITY_API_KEY', px); else localStorage.removeItem('PERPLEXITY_API_KEY');
+          if(o) localStorage.setItem('AQFAS_OWM_KEY', o); else localStorage.removeItem('AQFAS_OWM_KEY');
+          // set runtime overrides too for immediate use in this session
+          if(g) window.GEMINI_API_KEY = g; else delete window.GEMINI_API_KEY;
+          if(oa) window.OPENAI_API_KEY = oa; else delete window.OPENAI_API_KEY;
+          if(px) window.PERPLEXITY_API_KEY = px; else delete window.PERPLEXITY_API_KEY;
+          if(o) window.OPENWEATHER_API_KEY = o; else delete window.OPENWEATHER_API_KEY;
+          closeSettings();
+          alert('✅ Keys saved locally. For production, store keys on a secure server.');
+        }catch(err){ console.error(err); alert('❌ Failed to save keys: '+err); }
+      });
+
+      clearKeysBtn?.addEventListener('click', ()=>{
+        if(!confirm('Clear saved API keys from localStorage?')) return;
+        try{ 
+          localStorage.removeItem('GEMINI_API_KEY'); 
+          localStorage.removeItem('OPENAI_API_KEY'); 
+          localStorage.removeItem('PERPLEXITY_API_KEY'); 
+          localStorage.removeItem('AQFAS_OWM_KEY'); 
+          delete window.GEMINI_API_KEY; 
+          delete window.OPENAI_API_KEY; 
+          delete window.PERPLEXITY_API_KEY; 
+          delete window.OPENWEATHER_API_KEY; 
+          geminiKeyInput.value=''; 
+          openaiKeyInput.value=''; 
+          perplexityKeyInput.value=''; 
+          owmKeyInput.value=''; 
+          alert('✅ Keys cleared.'); 
+        }catch(e){ console.error(e); }
+      });
+
+      // Close settings when clicking outside
+      document.addEventListener('click', (ev)=>{
+        if(!settingsModal || !settingsModal.contains(ev.target) && ev.target !== settingsBtn){
+          settingsModal.style.display = 'none';
+        }
+      });
+    });
+
+    // ============================================================
+    // CROP RECOMMENDATION SYSTEM (based on latitude/longitude)
+    // ============================================================
+
+    // Comprehensive crop database with region-based data
+    const CROP_DATABASE = {
+      // North India (Wheat, Rice, Sugarcane dominant)
+      north: [
+        {
+          name: 'Wheat',
+          emoji: '🌾',
+          season: 'Oct-Mar',
+          icon: '🌾',
+          description: 'Primary winter crop in North India',
+          practices: [
+            'Plant in October-November',
+            'Requires 450-650mm rainfall',
+            'Use quality seeds (certified variety)',
+            'Apply nitrogen fertilizer in 2-3 splits'
+          ],
+          pests: [
+            'Armyworm: Use neem spray',
+            'Aphids: Use malathion 50EC',
+            'Termites: Use chlorpyrifos in soil'
+          ],
+          pesticides: [
+            'Carbendazim (fungicide)',
+            'Mancozeb (disease control)',
+            'Imidacloprid (insecticide)'
+          ]
+        },
+        {
+          name: 'Rice',
+          emoji: '🍚',
+          season: 'Jun-Nov',
+          icon: '🍚',
+          description: 'Monsoon crop, primary source of food',
+          practices: [
+            'Transplant in July-August',
+            'Requires 100-150cm rainfall',
+            'Maintain 5cm water depth',
+            'Apply urea in 2-3 splits during growth'
+          ],
+          pests: [
+            'Blast disease: Use Tricyclazole',
+            'Brown spot: Use carbendazim',
+            'Stem borer: Use quinalphos'
+          ],
+          pesticides: [
+            'Tricyclazole (fungicide)',
+            'Carbendazim (fungicide)',
+            'Quinalphos (insecticide)'
+          ]
+        },
+        {
+          name: 'Sugarcane',
+          emoji: '🎋',
+          season: 'Year-round',
+          icon: '🎋',
+          description: 'Cash crop, 10-14 months duration',
+          practices: [
+            'Plant in Sept-Nov or Feb-March',
+            'Requires 1200-1600mm rainfall',
+            'Apply FYM @ 15-20 tonnes/acre',
+            'Use certified seed (setts)'
+          ],
+          pests: [
+            'Red rot: Use resistant varieties',
+            'Pyrilla: Use neem oil spray',
+            'Top borer: Use carbofuran'
+          ],
+          pesticides: [
+            'Carbofuran (insecticide)',
+            'Hexaconazole (fungicide)',
+            'Thiamethoxam (insecticide)'
+          ]
+        },
+        {
+          name: 'Mustard',
+          emoji: '🟡',
+          season: 'Oct-Mar',
+          icon: '🟡',
+          description: 'Oilseed crop, high income crop',
+          practices: [
+            'Plant in October-November',
+            'Requires 400-500mm rainfall',
+            'Use certified seeds @ 2.5-3kg/acre',
+            'Apply 40-50kg N, 20-25kg P per acre'
+          ],
+          pests: [
+            'Sawfly: Use endosulfan',
+            'Aphids: Use imidacloprid',
+            'White rust: Use mancozeb'
+          ],
+          pesticides: [
+            'Endosulfan (insecticide)',
+            'Imidacloprid (insecticide)',
+            'Mancozeb (fungicide)'
+          ]
+        }
+      ],
+
+      // South India (Rice, Coconut, Groundnut)
+      south: [
+        {
+          name: 'Coconut',
+          emoji: '🥥',
+          season: 'Year-round',
+          icon: '🥥',
+          description: 'Perennial plantation crop',
+          practices: [
+            'Plant palms 25x25 feet apart',
+            'Provide supplementary irrigation',
+            'Apply FYM 25kg per palm annually',
+            'Intercrop with groundnut or turmeric'
+          ],
+          pests: [
+            'Rhinoceros beetle: Use pheromone trap',
+            'Scale insect: Use neem oil',
+            'Leaf rot: Ensure proper drainage'
+          ],
+          pesticides: [
+            'Quinalphos (insecticide)',
+            'Neem oil (organic)',
+            'Copper oxychloride (fungicide)'
+          ]
+        },
+        {
+          name: 'Groundnut',
+          emoji: '🌰',
+          season: 'Jun-Oct',
+          icon: '🌰',
+          description: 'Important oilseed crop',
+          practices: [
+            'Plant in June-July',
+            'Spacing: 30x10cm',
+            'Use certified seeds',
+            'Apply gypsum 350kg/acre at 45 days'
+          ],
+          pests: [
+            'Leaf miner: Use dimethoate',
+            'Pod borer: Use endosulfan',
+            'Tikka disease: Use mancozeb'
+          ],
+          pesticides: [
+            'Endosulfan (insecticide)',
+            'Dimethoate (insecticide)',
+            'Mancozeb (fungicide)'
+          ]
+        },
+        {
+          name: 'Rice',
+          emoji: '🍚',
+          season: 'Jun-Nov',
+          icon: '🍚',
+          description: 'Staple food crop',
+          practices: [
+            'Transplant in July',
+            'Maintain proper water level',
+            'Use improved varieties',
+            'Apply fertilizer in splits'
+          ],
+          pests: [
+            'Blast: Use propiconazole',
+            'Brown spot: Use carbendazim',
+            'Stem borer: Use carbofuran'
+          ],
+          pesticides: [
+            'Propiconazole (fungicide)',
+            'Carbendazim (fungicide)',
+            'Carbofuran (insecticide)'
+          ]
+        }
+      ],
+
+      // Central India (Cotton, Soybean, Gram)
+      central: [
+        {
+          name: 'Cotton',
+          emoji: '☁️',
+          season: 'May-Dec',
+          icon: '☁️',
+          description: 'Cash crop, white gold of agriculture',
+          practices: [
+            'Plant in May-June',
+            'Spacing: 60x30cm',
+            'Requires 600-800mm rainfall',
+            'Apply zinc sulfate 25kg/acre'
+          ],
+          pests: [
+            'Bollworm: Use quinalphos',
+            'Jassids: Use acephate',
+            'Whitefly: Use imidacloprid'
+          ],
+          pesticides: [
+            'Quinalphos (insecticide)',
+            'Acephate (insecticide)',
+            'Imidacloprid (insecticide)'
+          ]
+        },
+        {
+          name: 'Soybean',
+          emoji: '🫘',
+          season: 'Jun-Oct',
+          icon: '🫘',
+          description: 'Protein-rich pulse crop',
+          practices: [
+            'Plant in June',
+            'Use seed treatment',
+            'Spacing: 30-40x10cm',
+            'Irrigate at pod formation'
+          ],
+          pests: [
+            'Girdle beetle: Use endosulfan',
+            'Leaf eating caterpillar: Use neem',
+            'Stem fly: Use carbofuran'
+          ],
+          pesticides: [
+            'Endosulfan (insecticide)',
+            'Neem oil (organic)',
+            'Carbofuran (insecticide)'
+          ]
+        }
+      ],
+
+      // Eastern India (Rice, Jute, Vegetables)
+      east: [
+        {
+          name: 'Rice',
+          emoji: '🍚',
+          season: 'Jun-Nov',
+          icon: '🍚',
+          description: 'Main staple, high moisture region',
+          practices: [
+            'Direct seeding or transplanting',
+            'High rainfall region friendly',
+            'Use local adapted varieties',
+            'Manage water-logging'
+          ],
+          pests: [
+            'Blast: Use trifloxystrobin',
+            'False smut: Use copper oxychloride',
+            'Stem borer: Use chlorpyrifos'
+          ],
+          pesticides: [
+            'Trifloxystrobin (fungicide)',
+            'Copper oxychloride (fungicide)',
+            'Chlorpyrifos (insecticide)'
+          ]
+        },
+        {
+          name: 'Jute',
+          emoji: '📦',
+          season: 'Mar-Jul',
+          icon: '📦',
+          description: 'Golden fiber crop of India',
+          practices: [
+            'Plant in March-April',
+            'Spacing: 60-75cm rows, 10cm plants',
+            'Requires 100-200mm rainfall',
+            'Retting and decortication needed'
+          ],
+          pests: [
+            'Leaf roller: Use DDT',
+            'Stem borer: Use quinalphos',
+            'Rust: Use mancozeb'
+          ],
+          pesticides: [
+            'Quinalphos (insecticide)',
+            'Mancozeb (fungicide)',
+            'Copper oxychloride (fungicide)'
+          ]
+        }
+      ]
+    };
+
+    // Determine region based on latitude
+    function getRegionByLatLong(lat, lon) {
+      // North India: lat > 26°N
+      if (lat > 26) return 'north';
+      // South India: lat < 13°N
+      if (lat < 13) return 'south';
+      // Central India: 18-26°N
+      if (lat >= 18 && lat <= 26) return 'central';
+      // Eastern India: 72-88°E lon
+      if (lon > 72 && lon < 88) return 'east';
+      // Default to south
+      return 'south';
+    }
+
+    // Populate crops based on location
+    async function loadRecommendedCrops(lat, lon) {
+      const region = getRegionByLatLong(lat, lon);
+      const crops = CROP_DATABASE[region] || CROP_DATABASE.south;
+      const container = document.getElementById('cropsContainer');
+      
+      if (!container) return;
+
+      container.innerHTML = crops.map((crop, idx) => `
+        <div class="crop-card" onclick="showCropDetails('${crop.name}', ${idx}, '${region}')">
+          <span class="crop-emoji">${crop.emoji}</span>
+          <div class="crop-name">${crop.name}</div>
+          <div class="crop-season">📅 ${crop.season}</div>
+          <div class="crop-status">✓ Suitable for region</div>
+        </div>
+      `).join('');
+    }
+
+    // Show detailed crop information in modal
+    function showCropDetails(cropName, cropIdx, region) {
+      const crop = CROP_DATABASE[region][cropIdx];
+      if (!crop) return;
+
+      const modal = document.getElementById('cropDetailModal') || createCropModal();
+      const overlay = document.getElementById('cropOverlay') || createCropOverlay();
+
+      modal.innerHTML = `
+        <button class="crop-detail-close" onclick="closeCropDetails()">✕</button>
+        <h3><span>${crop.emoji}</span> ${crop.name}</h3>
+        
+        <div class="detail-section">
+          <h4>📖 About</h4>
+          <p>${crop.description}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>🌱 Growing Practices</h4>
+          <ul>
+            ${crop.practices.map(p => `<li>${p}</li>`).join('')}
+          </ul>
+        </div>
+
+        <div class="detail-section">
+          <h4>🐛 Common Pests & Treatment</h4>
+          <ul>
+            ${crop.pests.map(p => `<li>${p}</li>`).join('')}
+          </ul>
+        </div>
+
+        <div class="detail-section">
+          <h4>💊 Recommended Pesticides</h4>
+          <ul>
+            ${crop.pesticides.map(p => `<li>${p}</li>`).join('')}
+          </ul>
+        </div>
+
+        <div class="detail-section" style="background: rgba(46,204,113,0.1); padding: 12px; border-radius: 8px; border-left: 3px solid var(--accent-1); margin-top: 16px;">
+          <p style="font-size: 0.85rem; margin: 0;">
+            💡 <strong>Tip:</strong> Always consult local agricultural experts before applying pesticides. Use recommended doses and follow safety guidelines.
+          </p>
+        </div>
+      `;
+
+      modal.classList.add('active');
+      overlay.classList.add('active');
+    }
+
+    // Close crop details modal
+    function closeCropDetails() {
+      const modal = document.getElementById('cropDetailModal');
+      const overlay = document.getElementById('cropOverlay');
+      if (modal) modal.classList.remove('active');
+      if (overlay) overlay.classList.remove('active');
+    }
+
+    // Create crop detail modal if it doesn't exist
+    function createCropModal() {
+      const modal = document.createElement('div');
+      modal.id = 'cropDetailModal';
+      modal.className = 'crop-detail-modal';
+      document.body.appendChild(modal);
+      return modal;
+    }
+
+    // Create crop overlay if it doesn't exist
+    function createCropOverlay() {
+      const overlay = document.createElement('div');
+      overlay.id = 'cropOverlay';
+      overlay.className = 'crop-overlay';
+      overlay.onclick = closeCropDetails;
+      document.body.appendChild(overlay);
+      return overlay;
+    }
+
+    // Initialize crops display when location is available
+    function requestLocationAndUpdateCrops() {
+      if (!('geolocation' in navigator)) {
+        console.warn('Geolocation not supported');
+        return;
+      }
+
+      // Check cached location
+      try {
+        const cached = localStorage.getItem('AQFAS_CACHED_LOC');
+        if (cached) {
+          const { lat, lon } = JSON.parse(cached);
+          loadRecommendedCrops(lat, lon);
+          return;
+        }
+      } catch (e) { console.warn('Cache error:', e); }
+
+      // Request fresh location
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          loadRecommendedCrops(lat, lon);
+        },
+        (err) => {
+          console.warn('Geolocation failed:', err);
+          // Show default crops (South India)
+          loadRecommendedCrops(12, 79);
+        },
+        { enableHighAccuracy: false, timeout: 10000 }
+      );
+    }
+
+    // Load crops on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      requestLocationAndUpdateCrops();
+    });
+
+  </script>
 </body>
 </html>
